@@ -2,7 +2,7 @@ import React from 'react';
 import { withStyles, ThemeProvider } from '@material-ui/styles';
 import Navbar from '../Navbar/Navbar';
 import Jumbotron from './Jumbotron';
-import theme from '../../theme';
+import theme from '../../helper/theme';
 
 class Home extends React.Component {
   render() {

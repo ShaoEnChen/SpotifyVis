@@ -6,33 +6,33 @@ import InputBase from '@material-ui/core/InputBase';
 import Button from '@material-ui/core/Button';
 
 class Jumbotron extends React.Component {
-  
+
   constructor() {
     super();
     this.state = {
-      playlist: ''
+      playlistId: ''
     }
   }
 
   handleOnChange = (e) => {
     this.setState({
-      playlist: e.target.value
+      playlistId: e.target.value
     })
   }
 
   renderInputField = () => {
     const { classes } = this.props;
     return (
-      <FormControl className={ classes.formControl }>
+      <FormControl className={classes.formControl}>
         <InputBase
-            onChange={ this.handleOnChange }
-            className={ classes.bootstrapInput }>
+          onChange={this.handleOnChange}
+          className={classes.bootstrapInput}>
         </InputBase>
         <Button
-          component={ Link } to={`/vis?pl=${ this.state.playlist }`}
+          component={Link} to={`/vis?pl=${this.state.playlistId}`}
           variant="contained"
           color="primary"
-          className={ classes.buttonLink }>
+          className={classes.buttonLink}>
           Go!
         </Button>
       </FormControl>
@@ -43,16 +43,16 @@ class Jumbotron extends React.Component {
     const { classes } = this.props;
     return (
       <React.Fragment>
-        <div className={ classes.toolbarIndent }></div>
-        <div className={ classes.section }>
-          { this.renderInputField() }
+        <div className={classes.toolbarIndent}></div>
+        <div className={classes.section}>
+          {this.renderInputField()}
         </div>
       </React.Fragment>
     );
   }
 }
 
-const styles = (theme) => {  
+const styles = (theme) => {
   return ({
     section: {
       display: 'flex',
