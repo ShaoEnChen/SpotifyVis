@@ -1,7 +1,6 @@
 import React from 'react';
 import Hidden from '@material-ui/core/Hidden';
 import Drawer from '@material-ui/core/Drawer';
-import Divider from '@material-ui/core/Divider';
 import { withStyles } from '@material-ui/styles';
 
 const drawerWidth = 240;
@@ -19,30 +18,16 @@ class VisualDrawer extends React.Component {
     const { classes } = this.props;
     return (
       <React.Fragment>
-        <Hidden smUp implementation="css">
-          <Drawer variant="temporary"
-            open={ this.state.mobileOpen }
-            onClose={ () => { this.setState({ mobileOpen: !this.state.mobileOpen }) } }
-            classes={{
-              paper: classes.drawerPaper
-            }}
-            ModalProps={{
-              // Better open performance on mobile devices
-              keepMounted: true
-            }}>
-            <div className={ classes.toolbarIndent }></div>
-            <Divider />
-            {/* { Spotify Playlist } */}
-          </Drawer>
-        </Hidden>
+        {/* { Mobile Menu } */}
         <Hidden xsDown implementation="css">
           <Drawer
             open
+            className={classes.drawer}
             classes={{
               paper: classes.drawerPaper,
             }}
             variant="permanent">
-            <div className={ classes.toolbarIndent }></div>
+            <div className={classes.toolbarIndent}></div>
             {/* { Spotify Playlist } */}
           </Drawer>
         </Hidden>
@@ -53,27 +38,16 @@ class VisualDrawer extends React.Component {
 
 const styles = (theme) => {
   return ({
-    root: {
-      display: 'flex'
-    },
     drawer: {
+      display: 'flex',
       [theme.breakpoints.up('sm')]: {
         width: drawerWidth,
         flexShrink: 0
       }
     },
-    menuButton: {
-      marginRight: theme.spacing(2),
-      [theme.breakpoints.up('sm')]: {
-        display: 'none',
-      },
-    },
     toolbarIndent: theme.mixins.toolbar,
     drawerPaper: {
       width: drawerWidth
-    },
-    content: {
-      
     }
   });
 };
