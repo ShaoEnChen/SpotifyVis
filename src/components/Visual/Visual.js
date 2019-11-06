@@ -10,6 +10,7 @@ class Visual extends React.Component {
     const path = this.props.location.pathname;
     let locations = dataProvider.createRandomLocations();
     console.log(locations);
+    dataProvider.spotifyGet();
 
     return (
       <ThemeProvider theme={ theme }>
