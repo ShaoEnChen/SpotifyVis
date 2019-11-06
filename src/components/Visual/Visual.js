@@ -8,7 +8,8 @@ import dataProvider from '../../helper/dataProvider';
 class Visual extends React.Component {
   render() {
     const path = this.props.location.pathname;
-    console.log(dataProvider)
+    let locations = dataProvider.createRandomLocations();
+    console.log(locations);
 
     return (
       <ThemeProvider theme={ theme }>
