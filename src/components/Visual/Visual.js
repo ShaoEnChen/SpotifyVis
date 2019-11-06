@@ -11,6 +11,7 @@ class Visual extends React.Component {
     let locations = dataProvider.createRandomLocations();
     console.log(locations);
     dataProvider.spotifyGet();
+    dataProvider.spotifyPost();
 
     return (
       <ThemeProvider theme={ theme }>

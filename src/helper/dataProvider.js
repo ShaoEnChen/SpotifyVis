@@ -29,6 +29,27 @@ const dataProvider = {
         console.log(response.data);
     });
   },
+  spotifyPost: () => {
+    var bodyParameters = {
+      grant_type:'refresh_token',
+      refresh_token:'AQC4ih6IXhSl8YQJNsyLexYhAXfZrlxpv9236scyWIL1k_qBm9l4et5SMIQfm_r5sKZbnMu4wDUvPYRnW0FoASGrN5jF2lrRsgu5C2_BxArmHD9o5J6PF1q35Do0VS9gMsacXQ'
+    };
+
+    var session_url = 'http://cors-anywhere.herokuapp.com/https://accounts.spotify.com/api/token';
+    var username = 'd83740bfd39e48cd9e1cee53425b375b';
+    var password = 'eeb7bd011f2d41a0a0284a37a296cbf6';
+    var basicAuth = 'Basic ' + btoa(username + ':' + password);
+
+    axios.post(session_url, bodyParameters, {
+      headers: { 'Authorization': + basicAuth },
+      "Access-Control-Allow-Origin": "*"
+    }).then(function(response) {
+      console.log('Authenticated');
+    }).catch(function(error) {
+      console.log(error);
+      console.log('Error on Authentication');
+    });
+  }
   // More APIs, I mean our APIs that can be directly called in Viz page
 };
 
