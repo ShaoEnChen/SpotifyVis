@@ -1,4 +1,5 @@
 import axios from 'axios';
+import qs from 'qs';
 
 const dataProvider = {
   createRandomLocations: () => {
@@ -30,24 +31,26 @@ const dataProvider = {
     });
   },
   spotifyPost: () => {
-    var bodyParameters = {
-      grant_type:'refresh_token',
-      refresh_token:'AQC4ih6IXhSl8YQJNsyLexYhAXfZrlxpv9236scyWIL1k_qBm9l4et5SMIQfm_r5sKZbnMu4wDUvPYRnW0FoASGrN5jF2lrRsgu5C2_BxArmHD9o5J6PF1q35Do0VS9gMsacXQ'
+    const cors_url = 'https://cors-anywhere.herokuapp.com/';
+    const api_url = 'https://accounts.spotify.com/api/token';
+    const request_url = cors_url + api_url;
+    const clientId = '436d61cb446a48b0a9867aed113380c4';
+    const clientSecret = '647ae3f395474d74bde32870ccf955e7';
+    const basicAuth = 'Basic ' + btoa(clientId + ':' + clientSecret);
+    const bodyParameters = {
+      grant_type: 'client_credentials',
+      refresh_token: 'BQDLgWFfNca-UOxmt8oBYyorMVhRI0Na2sBhk0ieCApurG4_V_x52gwohg3EXiwdMjtsTnoENPsrKXqa526Cr6VzYX5B8eWbJaemyhgPNksXOix8vo4xMdyIapi8jXwwams1x8mqaT6AGEZlAAJloW4wIs_IgxQhear7He-Qx7tfjqb62Wk6TSMv'
     };
 
-    var session_url = 'http://cors-anywhere.herokuapp.com/https://accounts.spotify.com/api/token';
-    var username = 'd83740bfd39e48cd9e1cee53425b375b';
-    var password = 'eeb7bd011f2d41a0a0284a37a296cbf6';
-    var basicAuth = 'Basic ' + btoa(username + ':' + password);
-
-    axios.post(session_url, bodyParameters, {
-      headers: { 'Authorization': + basicAuth },
-      "Access-Control-Allow-Origin": "*"
+    axios.post(request_url, qs.stringify(bodyParameters), {
+      headers: {
+        'Authorization': basicAuth,
+        'Content-Type': 'application/x-www-form-urlencoded'
+      }
     }).then(function(response) {
-      console.log('Authenticated');
+      console.log(response);
     }).catch(function(error) {
       console.log(error);
-      console.log('Error on Authentication');
     });
   }
   // More APIs, I mean our APIs that can be directly called in Viz page
