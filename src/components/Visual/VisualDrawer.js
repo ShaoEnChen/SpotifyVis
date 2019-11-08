@@ -15,6 +15,7 @@ class VisualDrawer extends React.Component {
   }
 
   render() {
+    // props contains all of the parent's properties. can do props.accessToken or similar
     const { classes } = this.props;
     return (
       <React.Fragment>
@@ -28,7 +29,9 @@ class VisualDrawer extends React.Component {
             }}
             variant="permanent">
             <div className={classes.toolbarIndent}></div>
-            {/* { Spotify Playlist } */}
+            {<iframe src="https://open.spotify.com/embed/playlist/37i9dQZF1DXcBWIGoYBM5M"
+            className={classes.playlist} allowtransparency="true"
+            allow="encrypted-media"></iframe>}
           </Drawer>
         </Hidden>
       </React.Fragment>
@@ -48,6 +51,10 @@ const styles = (theme) => {
     toolbarIndent: theme.mixins.toolbar,
     drawerPaper: {
       width: drawerWidth
+    },
+    playlist: {
+      width: drawerWidth,
+      height: "100vh"
     }
   });
 };
