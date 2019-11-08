@@ -14,6 +14,8 @@ class VisualDrawer extends React.Component {
 
   render() {
     const { classes } = this.props;
+    const urlParams = new URLSearchParams(window.location.search);
+    const playlistId = urlParams.get('pl');
     return (
       <React.Fragment>
         {/* { Mobile Menu } */}
@@ -26,7 +28,10 @@ class VisualDrawer extends React.Component {
             }}
             variant="permanent">
             <div className={classes.toolbarIndent}></div>
-            {/* { Spotify Playlist } */}
+            <iframe title="playlist"
+                    src={playlistId}
+                    className={classes.playlist}
+                    allow="encrypted-media" />
           </Drawer>
         </Hidden>
       </React.Fragment>
@@ -46,6 +51,10 @@ const styles = (theme) => {
     toolbarIndent: theme.mixins.toolbar,
     drawerPaper: {
       width: theme.drawerWidth
+    },
+    playlist: {
+      width: theme.drawerWidth,
+      height: '100vh'
     }
   });
 };
