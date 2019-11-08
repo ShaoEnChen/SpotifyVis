@@ -3,8 +3,6 @@ import Hidden from '@material-ui/core/Hidden';
 import Drawer from '@material-ui/core/Drawer';
 import { withStyles } from '@material-ui/styles';
 
-const drawerWidth = 240;
-
 class VisualDrawer extends React.Component {
 
   constructor() {
@@ -41,13 +39,13 @@ const styles = (theme) => {
     drawer: {
       display: 'flex',
       [theme.breakpoints.up('sm')]: {
-        width: drawerWidth,
+        width: theme.drawerWidth,
         flexShrink: 0
       }
     },
     toolbarIndent: theme.mixins.toolbar,
     drawerPaper: {
-      width: drawerWidth
+      width: theme.drawerWidth
     }
   });
 };

@@ -47,9 +47,9 @@ const dataProvider = {
         'Authorization': basicAuth,
         'Content-Type': 'application/x-www-form-urlencoded'
       }
-    }).then(function(response) {
+    }).then((response) => {
       console.log(response);
-    }).catch(function(error) {
+    }).catch((error) => {
       console.log(error);
     });
   }
