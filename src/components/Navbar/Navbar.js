@@ -9,7 +9,7 @@ import VisualNav from './VisualNav';
 
 class Navbar extends React.Component {
   render() {
-    const { classes, location } = this.props;
+    const { classes, location, history } = this.props;
     return (
       <AppBar position="fixed" className={ classes.appBar }>
         <Toolbar className={ classes.toolbar }>
@@ -19,7 +19,9 @@ class Navbar extends React.Component {
             SpotifyViz
           </Typography>
           {
-            location === '/' ? <HomeNav /> : <VisualNav />
+            location === '/' ?
+              <HomeNav history={history} /> :
+              <VisualNav history={history} />
           }
         </Toolbar>
       </AppBar>
