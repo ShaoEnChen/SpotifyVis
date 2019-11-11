@@ -5,6 +5,12 @@ import * as d3 from 'd3';
 
 class SongsViz extends React.Component {
 
+  constructor(props) {
+    super(props);
+    this.indent = React.createRef();
+    this.viz = React.createRef();
+  }
+
   rescale(context, position) {
     const originalX = position[0];
     const originalY = position[1];
@@ -30,10 +36,9 @@ class SongsViz extends React.Component {
     context.restore();
   }
 
-  createViz() {
-    const indent = this.refs.indent;
-    const context = this.refs.context;
-
+  createViz = () => {
+    const indent = this.indent.current;
+    const context = this.viz.current;
     const contextHeight = window.innerHeight - indent.offsetHeight;
     const contextPadding = {
       top: 10,
@@ -63,8 +68,8 @@ class SongsViz extends React.Component {
     const { classes } = this.props;
     return (
       <Container className={classes.container}>
-        <div ref='indent' className={classes.toolbarIndent}></div>
-        <div ref='context' className={classes.context}></div>
+        <div ref={this.indent} className={classes.toolbarIndent}></div>
+        <div ref={this.viz} className={classes.context}></div>
       </Container>
     );
   }
