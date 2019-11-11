@@ -13,9 +13,7 @@ class VisualDrawer extends React.Component {
   }
 
   render() {
-    const { classes } = this.props;
-    const urlParams = new URLSearchParams(window.location.search);
-    const playlistId = urlParams.get('pl');
+    const { classes, playlistUrl } = this.props;
     return (
       <React.Fragment>
         {/* { Mobile Menu } */}
@@ -29,9 +27,9 @@ class VisualDrawer extends React.Component {
             variant="permanent">
             <div className={classes.toolbarIndent}></div>
             <iframe title="playlist"
-                    src={playlistId}
-                    className={classes.playlist}
-                    allow="encrypted-media" />
+              src={playlistUrl}
+              className={classes.playlist}
+              allow="encrypted-media" />
           </Drawer>
         </Hidden>
       </React.Fragment>
