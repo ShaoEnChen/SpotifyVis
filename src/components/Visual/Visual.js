@@ -27,13 +27,15 @@ class Visual extends React.Component {
 
   render() {
     const path = this.props.location.pathname;
-    let locations = dataProvider.createRandomLocations();
+    let songs = dataProvider.createRandomSongs();
+    const urlParams = new URLSearchParams(window.location.search);
+    const playlistUrl = urlParams.get('pl');
 
     return (
-      <ThemeProvider theme={ theme }>
-        <Navbar location={ path } />
-        <VisualDrawer />
-        <SongsViz songs={locations} />
+      <ThemeProvider theme={theme}>
+        <Navbar location={path} />
+        <VisualDrawer playlistUrl={playlistUrl} />
+        <SongsViz songs={songs} />
       </ThemeProvider>
     );
   }

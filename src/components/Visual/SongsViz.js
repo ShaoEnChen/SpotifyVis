@@ -1,27 +1,70 @@
 import React from 'react';
 import { withStyles } from '@material-ui/styles';
 import Container from '@material-ui/core/Container';
-import d3 from 'd3';
+import * as d3 from 'd3';
 
 class SongsViz extends React.Component {
 
+  rescale(context, position) {
+    const originalX = position[0];
+    const originalY = position[1];
+    const x = originalX / 100 * context.canvas.width;
+    const y = originalY / 100 * context.canvas.height;
+    return [x, y];
+  }
+
+  zoomed(context, transform) {
+    const radius = 5;
+    const songs = this.props.songs;
+
+    context.save();
+    context.clearRect(0, 0, context.canvas.width, context.canvas.height);
+    context.beginPath();
+    for (const songIndex in songs) {
+      let position = this.rescale(context, songs[songIndex].position);
+      const [x, y] = transform.apply(position);
+      context.moveTo(x + radius, y);
+      context.arc(x, y, radius, 0, 2 * Math.PI);
+    }
+    context.fill();
+    context.restore();
+  }
+
+  createViz() {
+    const indent = this.refs.indent;
+    const context = this.refs.context;
+
+    const contextHeight = window.innerHeight - indent.offsetHeight;
+    const contextPadding = {
+      top: 10,
+      bottom: 10
+    };
+    const canvasHeight = contextHeight - contextPadding.top - contextPadding.bottom;
+    const canvasWidth = context.offsetWidth;
+
+    const canvas = d3.select(context)
+      .append('canvas')
+      .attr('width', canvasWidth)
+      .attr('height', canvasHeight);
+    const ctx = canvas.node().getContext('2d');
+
+    d3.select(ctx.canvas).call(d3.zoom()
+      .scaleExtent([1, 8])
+      .on("zoom", () => this.zoomed(ctx, d3.event.transform)));
+
+    this.zoomed(ctx, d3.zoomIdentity);
+  }
+
   componentDidMount() {
-    // const ctx = this.refs.context;
-    // const contextWidth = ctx.offsetWidth;
-    // const contextHeight = ctx.offsetHeight;
-    // const context = DOM.context2d(contextWidth, contextHeight);
-    // console.log(context)
+    this.createViz();
   }
 
   render() {
-    console.log(this.props.songs);
     const { classes } = this.props;
     return (
       <Container className={classes.container}>
-        <div className={classes.toolbarIndent}></div>
-        <div ref='context' className={classes.vizCanvas}>
-          <button>Click!</button>
-        </div>
+        <div ref='indent' className={classes.toolbarIndent}></div>
+        <div ref='context' className={classes.context}></div>
       </Container>
     );
   }
@@ -35,9 +78,10 @@ const styles = (theme) => {
       height: '100vh',
       marginLeft: theme.drawerWidth
     },
-    vizCanvas: {
-      width: '100%',
-      height: '100%'
+    context: {
+      display: 'flex',
+      paddingTop: '10px',
+      paddingBottom: '10px'
     }
   });
 };
