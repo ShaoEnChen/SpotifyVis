@@ -1,6 +1,8 @@
 import axios from 'axios';
 import qs from 'qs';
+//import {LogisticsTracker} from './logisticsTracker';
 
+//FIXME: we should really be saving the access token somewhere instead of hardcoding it
 const dataProvider = {
   createRandomSongs: () => {
     let songs = {};
@@ -18,8 +20,8 @@ const dataProvider = {
 
     return songs;
   },
-  spotifyGet: () => {
-    const accessToken = 'BQAgnXShwOKcLv93A7NhWknXlXoJtZapu4KuhIHO0wuqJkPPr0uQIop32nxUHggMKSVfRdFJdEkVvjJvBECizv98AG10f0cON21_eUyNt4748Ifs8PloqUMhNGtKCAGLcGy4NipTRNmSjQGMoLTcZy_chNMUHp4lH4bfHQOSY9c3KZJ4QF-3iEu4';
+  spotifyGetSongFeatures: () => {
+    const accessToken = 'BQDeKn3tKSnI6yJsgQwC-eOmhDYpsWiSoaQNYqLecifa43jvOV6FVc4LXT_laQsyih10KK0whkVfdWNzWUo';
     axios.defaults.headers.common = {
       'Authorization': 'Bearer ' + accessToken
     };
@@ -48,14 +50,48 @@ const dataProvider = {
     axios.post(request_url, qs.stringify(bodyParameters), {
       headers: {
         'Authorization': basicAuth,
-        'Content-Type': 'application/x-www-form-urlencoded'
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'X-Requested-With': 'XMLHttpRequest'
       }
     }).then((response) => {
       console.log(response);
     }).catch((error) => {
       console.log(error);
     });
-  }
+  },
+  //Retrieves the total number of songs that we're going to need to grab.
+  //FIXME: how do you store this data in react?
+  spotifyGetPlaylistTrackCount: (playlistId) => {
+    const accessToken = 'BQDeKn3tKSnI6yJsgQwC-eOmhDYpsWiSoaQNYqLecifa43jvOV6FVc4LXT_laQsyih10KK0whkVfdWNzWUo';
+    axios.defaults.headers.common = {
+      'Authorization': 'Bearer ' + accessToken
+    };
+
+    axios.get('https://api.spotify.com/v1/playlists/' + playlistId + '/tracks', {
+      params: {
+        'fields': 'total'
+      }
+    }).then((response) => {
+      console.log(response.data);
+      //LogisticsTracker.limit = response.data.total;
+      //console.log(LogisticsTracker.limit);
+    });
+  },
+  spotifyGetPlaylistPage: (playlistId) => {
+    const accessToken = 'BQDeKn3tKSnI6yJsgQwC-eOmhDYpsWiSoaQNYqLecifa43jvOV6FVc4LXT_laQsyih10KK0whkVfdWNzWUo';
+    axios.defaults.headers.common = {
+      'Authorization': 'Bearer ' + accessToken
+    };
+    //FIXME: see https://developer.spotify.com/documentation/web-api/reference/playlists/get-playlists-tracks/
+    axios.get('https://api.spotify.com/v1/playlists/' + playlistId + '/tracks', {
+      params: {
+        'fields': 'items(track(id))',
+        'offset': 0
+      }
+    }).then((response) => {
+      console.log(response.data);
+    });
+  },
   // More APIs, I mean our APIs that can be directly called in Viz page
 };
 

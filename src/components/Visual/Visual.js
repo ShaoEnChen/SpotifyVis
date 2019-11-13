@@ -12,6 +12,7 @@ class Visual extends React.Component {
 
   constructor() {
     super();
+    console.log("hit");
     this.state = {
       response: null,
       accessToken :null,
@@ -134,8 +135,13 @@ class Visual extends React.Component {
     const path = location.pathname;
     const urlParams = new URLSearchParams(window.location.search);
 
-    const playlistUrl = urlParams.get('pl');
+    const playlistId = urlParams.get('pl');
+    const playlistUrl = 'https://open.spotify.com/embed/playlist/' + playlistId;
     const songs = dataProvider.createRandomSongs();
+    dataProvider.spotifyPost();
+    //dataProvider.spotifyGet();
+    dataProvider.spotifyGetPlaylistTrackCount(playlistId);
+    dataProvider.spotifyGetPlaylistPage(playlistId);
 
 
     if(this.state.accessToken != null && this.state.playlistId!=null){
