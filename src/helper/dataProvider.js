@@ -21,7 +21,7 @@ const dataProvider = {
     return songs;
   },
   spotifyGetSongFeatures: () => {
-    const accessToken = 'BQDeKn3tKSnI6yJsgQwC-eOmhDYpsWiSoaQNYqLecifa43jvOV6FVc4LXT_laQsyih10KK0whkVfdWNzWUo';
+    const accessToken = 'BQCJ_Qbe4MzEAB0Y8kXdyR-a0vVkS8fHWF1kFagSXALntNq0v8aLjTR1W6lS8ff0FyoNSm5EFtL2-m-UteM';
     axios.defaults.headers.common = {
       'Authorization': 'Bearer ' + accessToken
     };
@@ -62,7 +62,7 @@ const dataProvider = {
   //Retrieves the total number of songs that we're going to need to grab.
   //FIXME: how do you store this data in react?
   spotifyGetPlaylistTrackCount: (playlistId) => {
-    const accessToken = 'BQDeKn3tKSnI6yJsgQwC-eOmhDYpsWiSoaQNYqLecifa43jvOV6FVc4LXT_laQsyih10KK0whkVfdWNzWUo';
+    const accessToken = 'BQCJ_Qbe4MzEAB0Y8kXdyR-a0vVkS8fHWF1kFagSXALntNq0v8aLjTR1W6lS8ff0FyoNSm5EFtL2-m-UteM';
     axios.defaults.headers.common = {
       'Authorization': 'Bearer ' + accessToken
     };

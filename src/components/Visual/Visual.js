@@ -14,7 +14,10 @@ class Visual extends React.Component {
     super();
     console.log("hit");
     this.state = {
-      response: null
+      response: null,
+      index: 0,
+      limit: 0,
+      songs: {}
     };
   }
 
