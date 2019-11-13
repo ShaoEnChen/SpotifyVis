@@ -1,7 +1,34 @@
 import axios from 'axios';
 import qs from 'qs';
+import {variance} from 'mathjs';
 
 const dataProvider = {
+  createDataByVariance: (songs) => {
+    //let features = ['acousticness', 'danceability', 'energy', 'instrumentalness', 'liveness', 'loudness', 'speechiness', 'valence', 'tempo'];
+    const features = ['a', 'b', 'c'];
+    let feature2data = {};
+    let variances = [];
+    for (let feature of features) {
+      let data = [];
+      for (let song of songs) {
+        data.push(song[feature]);
+      }
+      feature2data[feature] = data;
+
+      let variance_ = variance(data);
+      variances.push([variance_, feature]);
+    }
+    variances.sort((a, b) => b[0] - a[0]);
+    const feature1 = variances[0][1];
+    const feature2 = variances[1][1];
+    let data1 = feature2data[feature1];
+    let data2 = feature2data[feature2];
+    console.log(songs);
+    console.log(feature2data);
+    console.log(variances);
+    console.log(feature1, feature2, data1, data2);
+    return feature1, feature2, data1, data2;
+  },
   createRandomSongs: () => {
     let songs = {};
     let songNum = 30;
