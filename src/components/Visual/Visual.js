@@ -24,16 +24,6 @@ class Visual extends React.Component {
     };
   }
 
-  parsePlaylistId(){
-
-    let str = window.location.search;
-    let res = str.split("/");
-    // console.log(res[5]);
-    let playlistid = res[5].split("?");
-    this.setState({playlistId:playlistid[0]});
-  }
-
-
   spotifyGetAccessToken() {
     const cors_url = 'https://cors-anywhere.herokuapp.com/';
     const api_url = 'https://accounts.spotify.com/api/token';
@@ -129,8 +119,7 @@ class Visual extends React.Component {
   }
 
   componentDidMount() {
-    this.spotifyGetAccessToken() ;
-    this.parsePlaylistId();
+    this.spotifyGetAccessToken();
   }
 
   render() {
