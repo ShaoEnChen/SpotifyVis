@@ -26,13 +26,13 @@ class PlaylistInput extends React.Component {
   }
 
   submit = () => {
-    const inputUrl = this.state.playlistId;
-    if (!inputUrl.includes('embed')) {
-      console.log('not a valid url');
+    const playlistId = this.state.playlistId;
+    if (playlistId.includes('/')) {
+      console.log('Please use a playlist id instead of url');
       return;
     }
-    
-    this.props.history.push(`/vis?pl=${inputUrl}`);
+
+    this.props.history.push(`/vis?pl=${playlistId}`);
   }
 
   render() {
