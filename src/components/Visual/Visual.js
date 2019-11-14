@@ -26,8 +26,12 @@ class Visual extends React.Component {
     const path = location.pathname;
     const urlParams = new URLSearchParams(window.location.search);
     const playlistUrl = urlParams.get('pl');
-    const songs = dataProvider.createRandomSongs();
-
+    //const songs = dataProvider.createRandomSongs();
+    const data = [{'tempo': 1, 'energy': 1, 'valence': 1}, {'tempo': 2, 'energy': 1, 'valence': 3}, {'tempo': 3, 'energy':1, 'valence': 5}];
+    const songNames = ['songName1', 'songName2', 'songName3'];
+    const songs = dataProvider.createDataByVariance(data, songNames);
+    //const songs = dataProvider.createDataBySelection(data, songNames, 'energy', 'valence');
+    console.log(playlistUrl);
     return (
       <ThemeProvider theme={theme}>
         <Navbar location={path} history={history} />

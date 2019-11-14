@@ -1,33 +1,85 @@
 import axios from 'axios';
 import qs from 'qs';
-import {variance} from 'mathjs';
+import {min, max, variance} from 'mathjs';
 
 const dataProvider = {
-  createDataByVariance: (songs) => {
-    //let features = ['acousticness', 'danceability', 'energy', 'instrumentalness', 'liveness', 'loudness', 'speechiness', 'valence', 'tempo'];
-    const features = ['a', 'b', 'c'];
+  normalize: (arr) => {
+      const min_ = min(arr);
+      const max_ = max(arr);
+      let new_arr = [];
+      if (min_ < max_) {
+        for (let x of arr) {
+          new_arr.push((x - min_) / (max_ - min_) * 100);
+        }
+      }
+      else {
+        for (let x of arr) {
+          new_arr.push(50);
+        }
+      }
+      return new_arr;
+  },
+  createDataByVariance: (songs, songNames) => {
+    const features = ['acousticness', 'danceability', 'energy', 'instrumentalness', 'liveness', 'loudness', 'speechiness', 'valence', 'tempo'];
     let feature2data = {};
     let variances = [];
     for (let feature of features) {
-      let data = [];
+      let featureData = [];
       for (let song of songs) {
-        data.push(song[feature]);
+        featureData.push(song[feature]);
       }
-      feature2data[feature] = data;
+      feature2data[feature] = featureData;
 
-      let variance_ = variance(data);
+      const variance_ = variance(featureData);
       variances.push([variance_, feature]);
     }
     variances.sort((a, b) => b[0] - a[0]);
-    const feature1 = variances[0][1];
-    const feature2 = variances[1][1];
-    let data1 = feature2data[feature1];
-    let data2 = feature2data[feature2];
-    console.log(songs);
-    console.log(feature2data);
-    console.log(variances);
-    console.log(feature1, feature2, data1, data2);
-    return feature1, feature2, data1, data2;
+    const x_feature = variances[0][1];
+    const y_feature = variances[1][1];
+
+    let x_data = feature2data[x_feature];
+    let y_data = feature2data[y_feature];
+
+    x_data = dataProvider.normalize(x_data);
+    y_data = dataProvider.normalize(y_data);
+
+    let data = {features: [x_feature, y_feature]};
+    let songData = []
+    for (let i = 0; i < songNames.length; i++) {
+      songData.push({
+        songName: songNames[i],
+        position: [x_data[i], y_data[i]]
+      });
+    }
+    data.songs = songData;
+    return data;
+  },
+  createDataBySelection: (songs, songNames, x_feature, y_feature) => {
+    const features = ['acousticness', 'danceability', 'energy', 'instrumentalness', 'liveness', 'loudness', 'speechiness', 'valence', 'tempo'];
+    let feature2data = {};
+    for (let feature of features) {
+      let featureData = [];
+      for (let song of songs) {
+        featureData.push(song[feature]);
+      }
+      feature2data[feature] = featureData;
+    }
+    let x_data = feature2data[x_feature];
+    let y_data = feature2data[y_feature];
+
+    x_data = dataProvider.normalize(x_data);
+    y_data = dataProvider.normalize(y_data);
+
+    let data = {features: [x_feature, y_feature]};
+    let songData = []
+    for (let i = 0; i < songNames.length; i++) {
+      songData.push({
+        songName: songNames[i],
+        position: [x_data[i], y_data[i]]
+      });
+    }
+    data.songs = songData;
+    return data;
   },
   createRandomSongs: () => {
     let songs = {};
