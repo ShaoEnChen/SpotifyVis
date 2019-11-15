@@ -4,16 +4,10 @@ import Drawer from '@material-ui/core/Drawer';
 import { withStyles } from '@material-ui/styles';
 
 class VisualDrawer extends React.Component {
-
-  constructor() {
-    super();
-    this.state = {
-      mobileOpen: false
-    };
-  }
-
   render() {
-    const { classes, playlistUrl } = this.props;
+    const { classes, playlistId } = this.props;
+    const playlistUrl = 'https://open.spotify.com/embed/playlist/' + playlistId;
+    
     return (
       <React.Fragment>
         {/* { Mobile Menu } */}
