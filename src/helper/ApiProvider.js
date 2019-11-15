@@ -1,10 +1,11 @@
 import axios from 'axios';
+import { mean, std, min, max, dot, variance } from 'mathjs';
+import { PCA } from 'ml-pca';
 
 const ApiProvider = {
   createRandomSongs: () => {
     let songs = {};
     let songNum = 30;
-
     for (let i = 0; i < songNum; i++) {
       songs[i] = {
         songName: 'random' + (i + 1),
@@ -14,9 +15,9 @@ const ApiProvider = {
         ]
       };
     }
-
     return songs;
   },
+
   spotifyGetTracksAndAudioFeatures: (spotifyApi, accessToken, playlistId, that) => {
     spotifyApi.setAccessToken(accessToken);
     spotifyApi.getPlaylistTracks(playlistId).then((data) => {
@@ -62,6 +63,7 @@ const ApiProvider = {
       console.log(error);
     });
   },
+
   spotifyGetPlaylistPage: (accessToken, playlistId) => {
     axios.defaults.headers.common = {
       'Authorization': 'Bearer ' + accessToken
@@ -76,6 +78,148 @@ const ApiProvider = {
     }).catch((error) => {
       console.log(error);
     });;
+  },
+
+  standardize: (arr) => {
+    const mean_ = mean(arr);
+    const std_ = std(arr);
+    let newArr;
+    if (std_ !== 0) {
+      newArr = arr.map(x => (x - mean_) / std_);
+    }
+    else {
+      newArr = arr.map(x => 0);
+    }
+    return newArr;
+  },
+
+  minMaxNormalize: (arr) => {
+    const min_ = min(arr);
+    const max_ = max(arr);
+    let newArr;
+    if (min_ < max_) {
+      newArr = arr.map(x => (x - min_) / (max_ - min_));
+    }
+    else {
+      newArr = arr.map(x => 0.5);
+    }
+    return newArr;
+  },
+
+  createDataByPCA: (songs, songNames) => {
+    const features = ['acousticness', 'danceability', 'energy', 'instrumentalness', 'liveness', 'loudness', 'speechiness', 'valence', 'tempo'];
+    let feature2Data = {};
+    for (let feature of features) {
+      let featureData = [];
+      for (let song of songs) {
+        featureData.push(song[feature]);
+      }
+      featureData = ApiProvider.standardize(featureData);
+      feature2Data[feature] = featureData;
+    }
+
+    const sampleNum = feature2Data[features[0]].length;
+    const featureNum = features.length;
+    let dataset = [];
+    for (let i = 0; i < sampleNum; i++) {
+      let rowData = [];
+      for (let j = 0; j < featureNum; j++) {
+        rowData.push(feature2Data[features[j]][i]);
+      }
+      dataset.push(rowData);
+    }
+
+    const pca = new PCA(dataset);
+    const vectors = pca.getEigenvectors();
+    const rowNum = vectors.rows;
+    let xVector = [];
+    let yVector = [];
+    for (let i = 0; i < rowNum; i++) {
+      xVector.push(vectors.get(i, 0));
+      yVector.push(vectors.get(i, 1));
+    }
+    let xData = [];
+    let yData = [];
+    for (let data of dataset) {
+      xData.push(dot(data, xVector));
+      yData.push(dot(data, yVector));
+    }
+
+    xData = ApiProvider.minMaxNormalize(xData);
+    yData = ApiProvider.minMaxNormalize(yData);
+
+    const songNum = songNames.length;
+    let songData = []
+    for (let i = 0; i < songNum; i++) {
+      songData.push({
+        songName: songNames[i],
+        position: [xData[i] * 100, yData[i] * 100]
+      });
+    }
+    return { features: ['', ''], songs: songData };
+  },
+
+  createDataByVariance: (songs, songNames) => {
+    const features = ['acousticness', 'danceability', 'energy', 'instrumentalness', 'liveness', 'loudness', 'speechiness', 'valence', 'tempo'];
+    let feature2Data = {};
+    let variances = [];
+    for (let feature of features) {
+      let featureData = [];
+      for (let song of songs) {
+        featureData.push(song[feature]);
+      }
+      feature2Data[feature] = featureData;
+
+      const variance_ = variance(featureData);
+      variances.push([variance_, feature]);
+    }
+    variances.sort((a, b) => b[0] - a[0]);
+    const xFeature = variances[0][1];
+    const yFeature = variances[1][1];
+
+    let xData = feature2Data[xFeature];
+    let yData = feature2Data[yFeature];
+
+    xData = ApiProvider.minMaxNormalize(xData);
+    yData = ApiProvider.minMaxNormalize(yData);
+
+    const songNum = songNames.length;
+    let songData = []
+    for (let i = 0; i < songNum; i++) {
+      songData.push({
+        songName: songNames[i],
+        position: [xData[i] * 100, yData[i] * 100]
+      });
+    }
+    return { features: [xFeature, yFeature], songs: songData };
+  },
+
+  createDataBySelection: (songs, songNames, xFeature, yFeature) => {
+    const features = ['acousticness', 'danceability', 'energy', 'instrumentalness', 'liveness', 'loudness', 'speechiness', 'valence', 'tempo'];
+    let feature2Data = {};
+    for (let feature of features) {
+      let featureData = [];
+      for (let song of songs) {
+        featureData.push(song[feature]);
+      }
+      feature2Data[feature] = featureData;
+    }
+
+    let xData = feature2Data[xFeature];
+    let yData = feature2Data[yFeature];
+
+    xData = ApiProvider.minMaxNormalize(xData);
+    yData = ApiProvider.minMaxNormalize(yData);
+
+    const songNum = songNames.length;
+    let songData = []
+    for (let i = 0; i < songNum; i++) {
+      songData.push({
+        songName: songNames[i],
+        position: [xData[i] * 100, yData[i] * 100]
+      });
+    }
+    return { features: [xFeature, yFeature], songs: songData };
   }
 };
 

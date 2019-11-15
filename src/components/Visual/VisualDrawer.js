@@ -7,7 +7,7 @@ class VisualDrawer extends React.Component {
   render() {
     const { classes, playlistId } = this.props;
     const playlistUrl = 'https://open.spotify.com/embed/playlist/' + playlistId;
-    
+
     return (
       <React.Fragment>
         {/* { Mobile Menu } */}
