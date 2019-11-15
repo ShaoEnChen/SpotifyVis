@@ -1,162 +1,79 @@
 import React from 'react';
+import axios from 'axios';
+import qs from 'qs';
+import SpotifyWebApi from 'spotify-web-api-js';
 import { ThemeProvider } from '@material-ui/styles';
 import Navbar from '../Navbar/Navbar';
 import VisualDrawer from './VisualDrawer';
-import theme from '../../helper/theme';
-import dataProvider from '../../helper/dataProvider';
 import SongsViz from './SongsViz';
-import axios from 'axios';
-import qs from 'qs';
+import theme from '../../helper/theme';
+import ApiProvider from '../../helper/ApiProvider';
 
 class Visual extends React.Component {
 
   constructor() {
     super();
-    console.log("hit");
     this.state = {
-      response: null,
-      index: 0,
-      limit: 0,
-      songs: {},
-      accessToken: null,
-      playlistId: null,
-      tracks: null
+      playlist_batch_index: 0
     };
   }
 
-  spotifyGetAccessToken() {
+  componentDidMount() {
+    //Flow :
+    //AccessToken, playListId -> tracks, tracksArray -> tracks audio features
+    //Use Javascript Promise object to concatenate response and step by step
+    //store result into State
+
+    const clientId = process.env.REACT_APP_CLIENT_ID;
+    const clientSecret = process.env.REACT_APP_CLIENT_SECRET;
+    const spotifyApi = new SpotifyWebApi({ clientId, clientSecret });
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const playlistId = urlParams.get('pl');
+
     const cors_url = 'https://cors-anywhere.herokuapp.com/';
     const api_url = 'https://accounts.spotify.com/api/token';
     const request_url = cors_url + api_url;
-    const clientId = '436d61cb446a48b0a9867aed113380c4';
-    const clientSecret = '647ae3f395474d74bde32870ccf955e7';
-    const basicAuth = 'Basic ' + btoa(clientId + ':' + clientSecret);
     const bodyParameters = {
       grant_type: 'client_credentials',
-      refresh_token: 'BQDLgWFfNca-UOxmt8oBYyorMVhRI0Na2sBhk0ieCApurG4_V_x52gwohg3EXiwdMjtsTnoENPsrKXqa526Cr6VzYX5B8eWbJaemyhgPNksXOix8vo4xMdyIapi8jXwwams1x8mqaT6AGEZlAAJloW4wIs_IgxQhear7He-Qx7tfjqb62Wk6TSMv'
+      refresh_token: process.env.REACT_APP_REFRESH_TOKEN
     };
+    const basicAuth = 'Basic ' + btoa(clientId + ':' + clientSecret);
 
+    // First, get the access token for tracks retrieval afterwards
     axios.post(request_url, qs.stringify(bodyParameters), {
       headers: {
         'Authorization': basicAuth,
         'Content-Type': 'application/x-www-form-urlencoded'
       }
     }).then((response) => {
+      const accessToken = response.data.access_token;
+      return accessToken;
 
-      this.setState({accessToken:response.data.access_token});
-
+    // Then, we get the tracks in the playlist and their audio features.
+    // As Spotify has a maximum batch size of 100 songs/request,
+    // TODO: we have to send this request multiple times to get all tracks.
+    }).then((accessToken) => {
+      ApiProvider.spotifyGetTracksAndAudioFeatures(spotifyApi, accessToken, playlistId, this);
     }).catch((error) => {
       console.log(error);
     });
-  }
-
-  onComplete(input){
-    console.log(" On completes");
-    // this.setState({tracks : input});
-  }
-
-
-  spotifyGetTracksViaPlaylist(whenDone){
-    let SpotifyWebApi = require('spotify-web-api-js');
-
-    let spotifyApi = new SpotifyWebApi({
-      clientId: 'd83740bfd39e48cd9e1cee53425b375b',
-      clientSecret: 'eeb7bd011f2d41a0a0284a37a296cbf6'
-    });
-    // spotifyApi.setAccessToken('BQBr8zoFUITS3oe7Ex1oCo4BOb-dW5J0_fCVf-t3jVlBGEKLEqs2g1JkNdd-qDcCvI4cpoVxF8m5RCZncL8');
-    // spotifyApi.getPlaylistTracks('5ORlAqcF4dhRbEgs7ohRn8')
-
-    spotifyApi.setAccessToken(this.state.accessToken);
-    spotifyApi.getPlaylistTracks(this.state.playlistId)
-    .then((data) => {
-
-      let tracks = [];
-
-      console.log('Tracks: ', data.items);
-
-
-
-      data.items.forEach(function (arrayItem) {
-          var x = arrayItem.track;
-          // console.log(x);
-          let track = {}
-          track.songName = arrayItem.track.name;
-          track.id = arrayItem.track.id;
-          track.artist = arrayItem.track.artists;
-          track.album = arrayItem.track.album;
-          tracks.push(track);
-          // return tracks;
-
-      });
-      console.log(tracks);
-      this.setState({tracks : tracks});
-      whenDone(tracks);
-    }, function(err) {
-      console.error(err);
-    });
-    // console.log(tracks);
-    // this.setState({tracks : "AAA"});
-  }
-
-  spotifyGetAudioFeatures(){
-    let SpotifyWebApi = require('spotify-web-api-js');
-
-    let spotifyApi = new SpotifyWebApi({
-      clientId: 'd83740bfd39e48cd9e1cee53425b375b',
-      clientSecret: 'eeb7bd011f2d41a0a0284a37a296cbf6'
-    });
-    spotifyApi.setAccessToken(this.state.accessToken);
-    // spotifyApi.setAccessToken('BQCcvlRQpsbWfBUOfFd6sUWGIz5k3s1rcev6zO4zpjDyoYwJLvM2Ma5w7L3QQD_HlztLs_NZ8c6VI6Um0N4');
-    var array= ['4JpKVNYnVcJ8tuMKjAj50A','2NRANZE9UCmPAS5XVbXL40','24JygzOLM0EmRQeGtFcIcG']
-    spotifyApi.getAudioFeaturesForTracks(array).then(
-      function(data) {
-        console.log('Audio Features for tracks : ', data.audio_features);
-      },
-      function(err) {
-        console.error(err);
-      }
-      );
-  }
-
-  componentDidMount() {
-    this.spotifyGetAccessToken();
   }
 
   render() {
     const { location, history } = this.props;
     const path = location.pathname;
     const urlParams = new URLSearchParams(window.location.search);
-
     const playlistId = urlParams.get('pl');
-    const playlistUrl = 'https://open.spotify.com/embed/playlist/' + playlistId;
-    const songs = dataProvider.createRandomSongs();
-    dataProvider.spotifyPost();
-    //dataProvider.spotifyGet();
-    dataProvider.spotifyGetPlaylistTrackCount(playlistId);
-    dataProvider.spotifyGetPlaylistPage(playlistId);
 
-
-    if(this.state.accessToken != null && this.state.playlistId!=null){
-      // this.spotifyGetAudioFeatures();
-      console.log("Yes token: "+this.state.accessToken );
-      console.log("playlistId: "+this.state.playlistId );
-
-      // Let's get audioFeatures
-      this.spotifyGetTracksViaPlaylist(this.onComplete);
-
-      if(this.state.tracks!=null){
-        console.log("Here:"+this.state.tracks);
-      }
-      this.spotifyGetAudioFeatures();
-
-    }else{
-      console.log("No token");
-    }
+    //For test
+    const songs = ApiProvider.createRandomSongs();
+    console.log(this.state);
 
     return (
       <ThemeProvider theme={theme}>
         <Navbar location={path} history={history} />
-        <VisualDrawer playlistUrl={playlistUrl} />
+        <VisualDrawer playlistId={playlistId} />
         <SongsViz songs={songs} />
       </ThemeProvider>
     );
