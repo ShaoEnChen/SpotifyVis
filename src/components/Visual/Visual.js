@@ -17,7 +17,7 @@ class Visual extends React.Component {
       index: 0,
       limit: 0,
       songs: {},
-      accessToken: null, 
+      accessToken: null,
       playlistId: null,
       tracks: null,     //List of songName, artist, album
       tracksArr:null,   //List of songId (Used for audio features API)
@@ -27,7 +27,7 @@ class Visual extends React.Component {
 
   componentDidMount() {
     //Flow :
-    //AccessToken -> tracks, tracksArray -> Tracks Audio features
+    //AccessToken, playListId -> tracks, tracksArray -> tracks audio features
     //Use Javascript Promise object to concatenate response and step by step
     //store result into State
     const cors_url = 'https://cors-anywhere.herokuapp.com/';
@@ -46,13 +46,13 @@ class Visual extends React.Component {
         'Content-Type': 'application/x-www-form-urlencoded'
       }
     }).then((response) => {
-
+      //Save AccessToken into State
       this.setState({accessToken:response.data.access_token});
       const { location, history } = this.props;
       const path = location.pathname;
       const urlParams = new URLSearchParams(window.location.search);
       const playlistId = urlParams.get('pl');
-      //Save AccessToken into State
+      //Save playlistId into State
       this.setState({playlistId:playlistId});
       return playlistId;
 
