@@ -35,11 +35,35 @@ const ApiProvider = {
 
     }).then((tracks) => {
       const trackIds = tracks.map((track) => track.id);
+      // console.log("trackIds",trackIds);
       spotifyApi.getAudioFeaturesForTracks(trackIds).then((data) => {
+        let audio_fs ={} ;
+        audio_fs.acousticness = [];
+        audio_fs.danceability = [];
+        audio_fs.energy = [];
+        audio_fs.instrumentalness = [];
+        audio_fs.liveness = [];
+        audio_fs.loudness = [];
+        audio_fs.speechiness = [];
+        audio_fs.valence = [];
+        audio_fs.tempo = [];
+        for(let elem of data.audio_features){
+          audio_fs.acousticness.push(elem.acousticness);
+          audio_fs.danceability.push(elem.danceability);
+          audio_fs.energy.push(elem.energy);
+          audio_fs.instrumentalness.push(elem.instrumentalness);
+          audio_fs.liveness.push(elem.liveness);
+          audio_fs.loudness.push(elem.loudness);
+          audio_fs.speechiness.push(elem.speechiness);
+          audio_fs.valence.push(elem.valence);
+          audio_fs.tempo.push(elem.tempo);
+        }
+
         that.setState({
           accessToken,
           tracks,
-          tracksAudioFeatures: data.audio_features
+          // tracksAudioFeatures: data.audio_features
+          tracksAudioFeatures: audio_fs
         });
       }, (error) => {
         console.error(error);
