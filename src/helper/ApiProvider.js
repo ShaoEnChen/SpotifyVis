@@ -130,35 +130,31 @@ const ApiProvider = {
     return newArr;
   },
 
-  createDataByPCA: (songs, songNames) => {
-    const features = ['acousticness', 'danceability', 'energy', 'instrumentalness', 'liveness', 'loudness', 'speechiness', 'valence', 'tempo'];
-    let feature2Data = {};
+  createDataByPCA: (featureData, songNames) => {
+    const features = Object.keys(featureData);
+    let newFeatureData = {};
     for (let feature of features) {
-      let featureData = [];
-      for (let song of songs) {
-        featureData.push(song[feature]);
-      }
-      featureData = ApiProvider.standardize(featureData);
-      feature2Data[feature] = featureData;
+      let data = featureData[feature];
+      data = ApiProvider.standardize(data);
+      newFeatureData[feature] = data;
     }
 
-    const sampleNum = feature2Data[features[0]].length;
-    const featureNum = features.length;
+    const sampleNum = newFeatureData[features[0]].length;
     let dataset = [];
     for (let i = 0; i < sampleNum; i++) {
       let rowData = [];
-      for (let j = 0; j < featureNum; j++) {
-        rowData.push(feature2Data[features[j]][i]);
+      for (let feature of features) {
+        rowData.push(newFeatureData[feature][i]);
       }
       dataset.push(rowData);
     }
 
     const pca = new PCA(dataset);
     const vectors = pca.getEigenvectors();
-    const rowNum = vectors.rows;
+    const featureNum = vectors.rows;
     let xVector = [];
     let yVector = [];
-    for (let i = 0; i < rowNum; i++) {
+    for (let i = 0; i < featureNum; i++) {
       xVector.push(vectors.get(i, 0));
       yVector.push(vectors.get(i, 1));
     }
@@ -183,26 +179,18 @@ const ApiProvider = {
     return { features: ['', ''], songs: songData };
   },
 
-  createDataByVariance: (songs, songNames) => {
-    const features = ['acousticness', 'danceability', 'energy', 'instrumentalness', 'liveness', 'loudness', 'speechiness', 'valence', 'tempo'];
-    let feature2Data = {};
+  createDataByVariance: (featureData, songNames) => {
+    const features = Object.keys(featureData);
     let variances = [];
     for (let feature of features) {
-      let featureData = [];
-      for (let song of songs) {
-        featureData.push(song[feature]);
-      }
-      feature2Data[feature] = featureData;
-
-      const variance_ = variance(featureData);
-      variances.push([variance_, feature]);
+      variances.push([variance(featureData[feature]), feature]);
     }
     variances.sort((a, b) => b[0] - a[0]);
     const xFeature = variances[0][1];
     const yFeature = variances[1][1];
 
-    let xData = feature2Data[xFeature];
-    let yData = feature2Data[yFeature];
+    let xData = featureData[xFeature];
+    let yData = featureData[yFeature];
 
     xData = ApiProvider.minMaxNormalize(xData);
     yData = ApiProvider.minMaxNormalize(yData);
@@ -218,19 +206,9 @@ const ApiProvider = {
     return { features: [xFeature, yFeature], songs: songData };
   },
 
-  createDataBySelection: (songs, songNames, xFeature, yFeature) => {
-    const features = ['acousticness', 'danceability', 'energy', 'instrumentalness', 'liveness', 'loudness', 'speechiness', 'valence', 'tempo'];
-    let feature2Data = {};
-    for (let feature of features) {
-      let featureData = [];
-      for (let song of songs) {
-        featureData.push(song[feature]);
-      }
-      feature2Data[feature] = featureData;
-    }
-
-    let xData = feature2Data[xFeature];
-    let yData = feature2Data[yFeature];
+  createDataBySelection: (featureData, songNames, xFeature, yFeature) => {
+    let xData = featureData[xFeature];
+    let yData = featureData[yFeature];
 
     xData = ApiProvider.minMaxNormalize(xData);
     yData = ApiProvider.minMaxNormalize(yData);
