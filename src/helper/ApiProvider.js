@@ -2,6 +2,8 @@ import axios from 'axios';
 import { mean, std, min, max, dot, variance } from 'mathjs';
 import { PCA } from 'ml-pca';
 
+const MaxArtistsPerRequest = 50;
+
 const ApiProvider = {
   createRandomSongs: () => {
     let songs = {};
@@ -41,14 +43,70 @@ const ApiProvider = {
           tracks,
           tracksAudioFeatures: data.audio_features
         });
+        // FIXME: this is chilling in here. Maybe we can move it if we want
+        ApiProvider.spotifyGetGenresForAllTracks(that);
       }, (error) => {
         console.error(error);
       });
     });
   },
 
-  //Retrieves the total number of songs that we're going to need to grab.
-  spotifyGetPlaylistTrackCount: (accessToken, playlistId) => {
+  // Retrevies track genres
+  // Calls a subroutine for batching. Makes promises and assigns as they come in
+  // We probably need error checking here (or not. Caching is hard)
+  // FIXME: the promises resolve asynchronously. We need to keep them in order or rearrange as they come in
+  spotifyGetGenresForAllTracks: (that) => {
+    var genres = [];
+    for (var genreIndex = 0; genreIndex < that.state.tracks.length-1; genreIndex += MaxArtistsPerRequest) {
+      ApiProvider.spotifyGetGenresForBatchOfTracks(that, genreIndex
+      ).then(genresBatch => {
+        genresBatch.forEach((arrayItem) => {
+          genres.push(arrayItem);
+        });
+      });
+    }
+    that.setState({
+      genres: genres
+    });
+  },
+
+  // Retrieves the genres assigned to the first artist of a track and assigns them to the track.
+  // Performs this operation for a maximum of 50 tracks, as per Spotify's API limit.
+  spotifyGetGenresForBatchOfTracks: (that, startIndex) => {
+    var index = startIndex;
+    var endIndex = min(startIndex + MaxArtistsPerRequest-1, that.state.tracks.length-1);
+    var idBatch = '';
+    if (index <= endIndex) {
+      idBatch = that.state.tracks[index].artist[0].id;
+      index++;
+    }
+    while (index <= endIndex) {
+      idBatch = idBatch.concat(',' + that.state.tracks[index].artist[0].id); //tracks.artist[i]
+      index++;
+    }
+
+    axios.defaults.headers.common = {
+      'Authorization': 'Bearer ' + that.state.accessToken
+    };
+    var response = axios.get('https://api.spotify.com/v1/artists', {
+      params: {
+        'ids': idBatch
+      }
+    }).then((response) => {
+      var genresBatch = [];
+      for (var i = 0; i < response.data.artists.length; i++) {
+        that.state.tracks[startIndex+i].genres = response.data.artists[i].genres;
+        genresBatch.push(that.state.tracks[startIndex+i].genres);
+      }
+      return genresBatch;
+    }).catch((error) => {
+      console.log(error);
+    });
+    return response;
+  },
+
+  // Retrieves the total number of songs that we're going to need to grab.
+  spotifyGetPlaylistTrackCount: (accessToken, playlistId, that) => {
     axios.defaults.headers.common = {
       'Authorization': 'Bearer ' + accessToken
     };
@@ -59,12 +117,16 @@ const ApiProvider = {
       }
     }).then((response) => {
       console.log(response.data);
+      that.setState({
+        tracksAudioFeatures: response.data.total
+      });
+
     }).catch((error) => {
       console.log(error);
     });
   },
 
-  spotifyGetPlaylistPage: (accessToken, playlistId) => {
+  spotifyGetPlaylistBatch: (accessToken, playlistId) => {
     axios.defaults.headers.common = {
       'Authorization': 'Bearer ' + accessToken
     };
