@@ -23,8 +23,7 @@ class VisualDrawer extends React.Component {
             <iframe title="playlist"
               src={playlistUrl}
               className={classes.playlist}
-              allow="encrypted-media"
-              offset="5" />
+              allow="encrypted-media"/>
           </Drawer>
         </Hidden>
       </React.Fragment>
