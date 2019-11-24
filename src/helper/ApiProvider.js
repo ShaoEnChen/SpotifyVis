@@ -20,8 +20,8 @@ const ApiProvider = {
     return songs;
   },
 
-  spotifyGetTracksAndAudioFeatures: (spotifyApi, accessToken, playlistId, that) => {
-    spotifyApi.setAccessToken(accessToken);
+  spotifyGetTracksAndAudioFeatures: (spotifyApi, playlistId, that) => {
+    spotifyApi.setAccessToken(that.state.accessToken);
     spotifyApi.getPlaylistTracks(playlistId).then((data) => {
       let tracks = [];
       data.items.forEach((arrayItem) => {
@@ -36,41 +36,37 @@ const ApiProvider = {
       return tracks;
 
     }).then((tracks) => {
-      const trackIds = tracks.map((track) => track.id);
-      // console.log("trackIds",trackIds);
-      spotifyApi.getAudioFeaturesForTracks(trackIds).then((data) => {
-        let audio_fs = {};
-        audio_fs.acousticness = [];
-        audio_fs.danceability = [];
-        audio_fs.energy = [];
-        audio_fs.instrumentalness = [];
-        audio_fs.liveness = [];
-        audio_fs.loudness = [];
-        audio_fs.speechiness = [];
-        audio_fs.valence = [];
-        audio_fs.tempo = [];
-        for (let elem of data.audio_features) {
-          audio_fs.acousticness.push(elem.acousticness);
-          audio_fs.danceability.push(elem.danceability);
-          audio_fs.energy.push(elem.energy);
-          audio_fs.instrumentalness.push(elem.instrumentalness);
-          audio_fs.liveness.push(elem.liveness);
-          audio_fs.loudness.push(elem.loudness);
-          audio_fs.speechiness.push(elem.speechiness);
-          audio_fs.valence.push(elem.valence);
-          audio_fs.tempo.push(elem.tempo);
-        }
+      ApiProvider.spotifyGetAudioFeatures(tracks, spotifyApi, that);
+      
+    }).catch((error) => {
+      console.log(error);
+    });
+  },
 
-        that.setState({
-          accessToken,
-          tracks,
-          tracksAudioFeatures: audio_fs
-        });
-        // FIXME: this is chilling in here. Maybe we can move it if we want
-        ApiProvider.spotifyGetGenresForAllTracks(that);
-      }, (error) => {
-        console.error(error);
+  spotifyGetAudioFeatures: (tracks, spotifyApi, that) => {
+    const trackIds = tracks.map((track) => track.id);
+    spotifyApi.getAudioFeaturesForTracks(trackIds).then((data) => {
+      data.audio_features.forEach((element, index) => {
+        const audio_features = {
+          acousticness: element.acousticness,
+          danceability: element.danceability,
+          energy: element.energy,
+          instrumentalness: element.instrumentalness,
+          liveness: element.liveness,
+          loudness: element.loudness,
+          speechiness: element.speechiness,
+          valence: element.valence,
+          tempo: element.tempo,
+        };
+        tracks[index] = {
+          ...tracks[index],
+          ...audio_features
+        }
       });
+      return tracks;
+
+    }).then((tracks) => {
+      ApiProvider.spotifyGetGenresForAllTracks(tracks, that);
     });
   },
 
@@ -78,32 +74,34 @@ const ApiProvider = {
   // Calls a subroutine for batching. Makes promises and assigns as they come in
   // We probably need error checking here (or not. Caching is hard)
   // FIXME: the promises resolve asynchronously. We need to keep them in order or rearrange as they come in
-  spotifyGetGenresForAllTracks: (that) => {
-    let genres = [];
-    for (let genreIndex = 0; genreIndex < that.state.tracks.length - 1; genreIndex += MaxArtistsPerRequest) {
-      ApiProvider.spotifyGetGenresForBatchOfTracks(that, genreIndex).then(genresBatch => {
-        genresBatch.forEach((arrayItem) => {
-          genres.push(arrayItem);
+  spotifyGetGenresForAllTracks: (tracks, that) => {
+    for (let genreIndex = 0; genreIndex < tracks.length; genreIndex += MaxArtistsPerRequest) {
+      ApiProvider.spotifyGetGenresForBatchOfTracks(genreIndex, tracks, that).then(genresBatch => {
+        genresBatch.forEach((genres, index) => {
+          tracks[index] = {
+            ...tracks[index],
+            genres
+          }
         });
       });
     }
     that.setState({
-      genres: genres
+      tracks
     });
   },
 
   // Retrieves the genres assigned to the first artist of a track and assigns them to the track.
   // Performs this operation for a maximum of 50 tracks, as per Spotify's API limit.
-  spotifyGetGenresForBatchOfTracks: (that, startIndex) => {
+  spotifyGetGenresForBatchOfTracks: (startIndex, tracks, that) => {
     let index = startIndex;
-    let endIndex = min(startIndex + MaxArtistsPerRequest - 1, that.state.tracks.length - 1);
+    let endIndex = min(startIndex + MaxArtistsPerRequest, tracks.length) - 1;
     let idBatch = '';
     if (index <= endIndex) {
-      idBatch = that.state.tracks[index].artist[0].id;
+      idBatch = tracks[index].artist[0].id;
       index++;
     }
     while (index <= endIndex) {
-      idBatch = idBatch.concat(',' + that.state.tracks[index].artist[0].id); //tracks.artist[i]
+      idBatch = idBatch.concat(',' + tracks[index].artist[0].id);
       index++;
     }
 
@@ -117,13 +115,14 @@ const ApiProvider = {
     }).then((response) => {
       let genresBatch = [];
       for (let i = 0; i < response.data.artists.length; i++) {
-        that.state.tracks[startIndex + i].genres = response.data.artists[i].genres;
-        genresBatch.push(that.state.tracks[startIndex + i].genres);
+        genresBatch.push(response.data.artists[i].genres);
       }
       return genresBatch;
+
     }).catch((error) => {
       console.log(error);
     });
+
     return response;
   },
 

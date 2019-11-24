@@ -47,14 +47,16 @@ class Visual extends React.Component {
         'Content-Type': 'application/x-www-form-urlencoded'
       }
     }).then((response) => {
-      const accessToken = response.data.access_token;
-      return accessToken;
+      this.setState({
+        accessToken: response.data.access_token
+      });
 
       // Then, we get the tracks in the playlist and their audio features.
       // As Spotify has a maximum batch size of 100 songs/request,
       // TODO: we have to send this request multiple times to get all tracks.
-    }).then((accessToken) => {
-      ApiProvider.spotifyGetTracksAndAudioFeatures(spotifyApi, accessToken, playlistId, this);
+    }).then(() => {
+      ApiProvider.spotifyGetTracksAndAudioFeatures(spotifyApi, playlistId, this);
+      
     }).catch((error) => {
       console.log(error);
     });
