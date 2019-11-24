@@ -9,24 +9,21 @@ class VisualDrawer extends React.Component {
     const playlistUrl = 'https://open.spotify.com/embed/playlist/' + playlistId;
 
     return (
-      <React.Fragment>
-        {/* { Mobile Menu } */}
-        <Hidden xsDown implementation="css">
-          <Drawer
-            open
-            className={classes.drawer}
-            classes={{
-              paper: classes.drawerPaper,
-            }}
-            variant="permanent">
-            <div className={classes.toolbarIndent}></div>
-            <iframe title="playlist"
-              src={playlistUrl}
-              className={classes.playlist}
-              allow="encrypted-media" />
-          </Drawer>
-        </Hidden>
-      </React.Fragment>
+      <Hidden xsDown implementation="css">
+        <Drawer
+          open
+          className={classes.drawer}
+          classes={{
+            paper: classes.drawerPaper,
+          }}
+          variant="permanent">
+          <div className={classes.toolbarIndent}></div>
+          <iframe title="playlist"
+            src={playlistUrl}
+            className={classes.playlist}
+            allow="encrypted-media" />
+        </Drawer>
+      </Hidden>
     );
   }
 }
