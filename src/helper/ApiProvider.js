@@ -75,11 +75,11 @@ const ApiProvider = {
   // We probably need error checking here (or not. Caching is hard)
   // FIXME: the promises resolve asynchronously. We need to keep them in order or rearrange as they come in
   spotifyGetGenresForAllTracks: (tracks, that) => {
-    for (let genreIndex = 0; genreIndex < tracks.length; genreIndex += MaxArtistsPerRequest) {
-      ApiProvider.spotifyGetGenresForBatchOfTracks(genreIndex, tracks, that).then(genresBatch => {
-        genresBatch.forEach((genres, index) => {
-          tracks[index] = {
-            ...tracks[index],
+    for (let startIndex = 0; startIndex < tracks.length; startIndex += MaxArtistsPerRequest) {
+      ApiProvider.spotifyGetGenresForBatchOfTracks(startIndex, tracks, that).then(genresBatch => {
+        genresBatch.forEach((genres, genreIndex) => {
+          tracks[startIndex + genreIndex] = {
+            ...tracks[startIndex + genreIndex],
             genres
           }
         });
