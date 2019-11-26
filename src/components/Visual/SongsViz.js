@@ -20,7 +20,8 @@ class SongsViz extends React.Component {
   }
 
   zoomed(context, transform) {
-    const radius = 5;
+    const zoomScale = transform.k;
+    const radius = 5 * zoomScale;
     const songs = this.props.songs;
 
     context.save();
@@ -36,6 +37,18 @@ class SongsViz extends React.Component {
     context.restore();
   }
 
+  reset = (canvas, zoomSetting) => {
+    const ctx = canvas.node().getContext('2d');
+    const width = ctx.canvas.width;
+    const height = ctx.canvas.height;
+
+    canvas.transition().duration(500).call(
+      zoomSetting.transform,
+      d3.zoomIdentity,
+      d3.zoomTransform(canvas.node()).invert([width / 2, height / 2])
+    );
+  }
+
   createViz = () => {
     const indent = this.indent.current;
     const context = this.viz.current;
@@ -46,17 +59,26 @@ class SongsViz extends React.Component {
     };
     const canvasHeight = contextHeight - contextPadding.top - contextPadding.bottom;
     const canvasWidth = context.offsetWidth;
-
     const canvas = d3.select(context)
-      .append('canvas')
-      .attr('width', canvasWidth)
-      .attr('height', canvasHeight);
+                    .append('canvas')
+                    .attr('width', canvasWidth)
+                    .attr('height', canvasHeight);
+
     const ctx = canvas.node().getContext('2d');
+    const zoomSetting = d3.zoom()
+                          .scaleExtent([1, 8])
+                          .on('zoom', () => {
+                            this.zoomed(ctx, d3.event.transform);
+                          });
 
-    d3.select(ctx.canvas).call(d3.zoom()
-      .scaleExtent([1, 8])
-      .on("zoom", () => this.zoomed(ctx, d3.event.transform)));
+    d3.select(ctx.canvas).call(zoomSetting);
 
+    // Zoom out to scale when clicked
+    canvas.on('click', () => {
+      this.reset(canvas, zoomSetting);
+    });
+
+    // Initial drawing on scale 1
     this.zoomed(ctx, d3.zoomIdentity);
   }
 
