@@ -69,14 +69,13 @@ class Visual extends React.Component {
     const playlistId = urlParams.get('pl');
 
     //For test
-    const songs = ApiProvider.createRandomSongs();
     console.log(this.state);
 
     return (
       <ThemeProvider theme={theme}>
         <Navbar location={path} history={history} />
         <VisualDrawer playlistId={playlistId} />
-        <SongsViz songs={songs} />
+        <SongsViz tracks={this.state.tracks} />
       </ThemeProvider>
     );
   }

@@ -5,19 +5,35 @@ import { PCA } from 'ml-pca';
 const MaxArtistsPerRequest = 50;
 
 const ApiProvider = {
-  createRandomSongs: () => {
-    let songs = {};
-    let songNum = 30;
-    for (let i = 0; i < songNum; i++) {
-      songs[i] = {
-        songName: 'random' + (i + 1),
-        position: [
-          Math.random() * 100,
-          Math.random() * 100
-        ]
-      };
-    }
-    return songs;
+  
+  getSongsCanvasPosition: (that) => {
+    const tracks = that.state.tracks;
+    const featuresBase = {
+      acousticness: [],
+      danceability: [],
+      energy: [],
+      instrumentalness: [],
+      liveness: [],
+      loudness: [],
+      speechiness: [],
+      tempo: [],
+      valence: []
+    };
+
+    const audioFeatures = tracks.reduce((features, track) => {
+      for (let feature in track.audioFeatures) {
+        features[feature].push(track.audioFeatures[feature]);
+      }
+      return features
+    }, featuresBase);
+
+    const canvasPositions = ApiProvider.createDataByPCA(audioFeatures);
+
+    tracks.forEach((track, index) => {
+      track.position = canvasPositions[index];
+    });
+
+    that.setState({ tracks });
   },
 
   spotifyGetTracksAndAudioFeatures: (spotifyApi, playlistId, that) => {
@@ -37,7 +53,7 @@ const ApiProvider = {
 
     }).then((tracks) => {
       ApiProvider.spotifyGetAudioFeatures(tracks, spotifyApi, that);
-      
+
     }).catch((error) => {
       console.log(error);
     });
@@ -47,7 +63,7 @@ const ApiProvider = {
     const trackIds = tracks.map((track) => track.id);
     spotifyApi.getAudioFeaturesForTracks(trackIds).then((data) => {
       data.audio_features.forEach((element, index) => {
-        const audio_features = {
+        const audioFeatures = {
           acousticness: element.acousticness,
           danceability: element.danceability,
           energy: element.energy,
@@ -60,7 +76,7 @@ const ApiProvider = {
         };
         tracks[index] = {
           ...tracks[index],
-          ...audio_features
+          audioFeatures
         }
       });
       return tracks;
@@ -85,8 +101,8 @@ const ApiProvider = {
         });
       });
     }
-    that.setState({
-      tracks
+    that.setState({ tracks }, () => {
+      ApiProvider.getSongsCanvasPosition(that);
     });
   },
 
@@ -190,7 +206,12 @@ const ApiProvider = {
     return newArr;
   },
 
-  createDataByPCA: (featureData, songNames) => {
+  createDataByPCA: (featureData) => {
+    // featureData
+    // {
+    //     feature1: [...features],
+    //     feature2: [...features],
+    // }
     const features = Object.keys(featureData);
     let newFeatureData = {};
     for (let feature of features) {
@@ -228,15 +249,12 @@ const ApiProvider = {
     xData = ApiProvider.minMaxNormalize(xData);
     yData = ApiProvider.minMaxNormalize(yData);
 
-    const songNum = songNames.length;
-    let songData = []
-    for (let i = 0; i < songNum; i++) {
-      songData.push({
-        songName: songNames[i],
-        position: [xData[i] * 100, yData[i] * 100]
-      });
+    let positionsByPCA = [];
+    for (let i = 0; i < sampleNum; i++) {
+      positionsByPCA.push([xData[i] * 100, yData[i] * 100]);
     }
-    return { features: ['', ''], songs: songData };
+
+    return positionsByPCA;
   },
 
   createDataByVariance: (featureData, songNames) => {

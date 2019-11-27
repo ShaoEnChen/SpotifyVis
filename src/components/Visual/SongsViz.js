@@ -22,13 +22,13 @@ class SongsViz extends React.Component {
   zoomed(context, transform) {
     const zoomScale = transform.k;
     const radius = 5 * zoomScale;
-    const songs = this.props.songs;
+    const tracks = this.props.tracks;
 
     context.save();
     context.clearRect(0, 0, context.canvas.width, context.canvas.height);
     context.beginPath();
-    for (const songIndex in songs) {
-      let position = this.rescale(context, songs[songIndex].position);
+    for (let trackIndex in tracks) {
+      let position = this.rescale(context, tracks[trackIndex].position);
       const [x, y] = transform.apply(position);
       context.moveTo(x + radius, y);
       context.arc(x, y, radius, 0, 2 * Math.PI);
@@ -63,7 +63,6 @@ class SongsViz extends React.Component {
                     .append('canvas')
                     .attr('width', canvasWidth)
                     .attr('height', canvasHeight);
-
     const ctx = canvas.node().getContext('2d');
     const zoomSetting = d3.zoom()
                           .scaleExtent([1, 8])
@@ -72,22 +71,21 @@ class SongsViz extends React.Component {
                           });
 
     d3.select(ctx.canvas).call(zoomSetting);
-
+    
+    // Initial drawing on scale 1
+    this.zoomed(ctx, d3.zoomIdentity);
+    
     // Zoom out to scale when clicked
     canvas.on('click', () => {
       this.reset(canvas, zoomSetting);
     });
-
-    // Initial drawing on scale 1
-    this.zoomed(ctx, d3.zoomIdentity);
-  }
-
-  componentDidMount() {
-    this.createViz();
   }
 
   render() {
     const { classes } = this.props;
+    if (this.props.tracks && this.props.tracks[0].position) {
+      this.createViz();
+    }
     return (
       <Container className={classes.container}>
         <div ref={this.indent} className={classes.toolbarIndent}></div>
