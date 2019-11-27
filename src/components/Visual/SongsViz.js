@@ -59,6 +59,10 @@ class SongsViz extends React.Component {
     };
     const canvasHeight = contextHeight - contextPadding.top - contextPadding.bottom;
     const canvasWidth = context.offsetWidth;
+
+    // Remove previous canvas if any for update
+    d3.select(context).select('canvas').remove();
+
     const canvas = d3.select(context)
                     .append('canvas')
                     .attr('width', canvasWidth)

@@ -10,7 +10,7 @@ class PlaylistInput extends React.Component {
     super(props);
     this.state = {
       playlistId: ''
-    }
+    };
   }
 
   handleOnChange = (e) => {

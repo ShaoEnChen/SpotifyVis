@@ -1,6 +1,5 @@
 import axios from 'axios';
-import { mean, std, min, max, dot, variance } from 'mathjs';
-import { PCA } from 'ml-pca';
+import Algorithm from './SimilarityAlgorithm';
 
 const MaxArtistsPerRequest = 50;
 
@@ -27,13 +26,27 @@ const ApiProvider = {
       return features
     }, featuresBase);
 
-    const canvasPositions = ApiProvider.createDataByPCA(audioFeatures);
+    const canvasPositions = ApiProvider.positionFactory(that.state, audioFeatures);
 
     tracks.forEach((track, index) => {
       track.position = canvasPositions[index];
     });
 
     that.setState({ tracks });
+  },
+
+  positionFactory: (state, audioFeatures) => {
+    const algorithm = state.similarityAlgorithm;
+    const xFeature = state.xAxisFeature;
+    const yFeature = state.yAxisFeature;
+    
+    if (algorithm === 'Variance') {
+      return Algorithm.createDataByVariance(audioFeatures);
+    } else if (xFeature && yFeature) {
+      return Algorithm.createDataBySelection(audioFeatures, xFeature, yFeature);
+    } else {
+      return Algorithm.createDataByPCA(audioFeatures);
+    }
   },
 
   spotifyGetTracksAndAudioFeatures: (spotifyApi, playlistId, that) => {
@@ -110,7 +123,7 @@ const ApiProvider = {
   // Performs this operation for a maximum of 50 tracks, as per Spotify's API limit.
   spotifyGetGenresForBatchOfTracks: (startIndex, tracks, that) => {
     let index = startIndex;
-    let endIndex = min(startIndex + MaxArtistsPerRequest, tracks.length) - 1;
+    let endIndex = Math.min(startIndex + MaxArtistsPerRequest, tracks.length) - 1;
     let idBatch = '';
     if (index <= endIndex) {
       idBatch = tracks[index].artist[0].id;
@@ -178,128 +191,6 @@ const ApiProvider = {
     }).catch((error) => {
       console.log(error);
     });;
-  },
-
-  standardize: (arr) => {
-    const mean_ = mean(arr);
-    const std_ = std(arr);
-    let newArr;
-    if (std_ !== 0) {
-      newArr = arr.map(x => (x - mean_) / std_);
-    }
-    else {
-      newArr = arr.map(x => 0);
-    }
-    return newArr;
-  },
-
-  minMaxNormalize: (arr) => {
-    const min_ = min(arr);
-    const max_ = max(arr);
-    let newArr;
-    if (min_ < max_) {
-      newArr = arr.map(x => (x - min_) / (max_ - min_));
-    }
-    else {
-      newArr = arr.map(x => 0.5);
-    }
-    return newArr;
-  },
-
-  createDataByPCA: (featureData) => {
-    // featureData
-    // {
-    //     feature1: [...features],
-    //     feature2: [...features],
-    // }
-    const features = Object.keys(featureData);
-    let newFeatureData = {};
-    for (let feature of features) {
-      let data = featureData[feature];
-      data = ApiProvider.standardize(data);
-      newFeatureData[feature] = data;
-    }
-
-    const sampleNum = newFeatureData[features[0]].length;
-    let dataset = [];
-    for (let i = 0; i < sampleNum; i++) {
-      let rowData = [];
-      for (let feature of features) {
-        rowData.push(newFeatureData[feature][i]);
-      }
-      dataset.push(rowData);
-    }
-
-    const pca = new PCA(dataset);
-    const vectors = pca.getEigenvectors();
-    const featureNum = vectors.rows;
-    let xVector = [];
-    let yVector = [];
-    for (let i = 0; i < featureNum; i++) {
-      xVector.push(vectors.get(i, 0));
-      yVector.push(vectors.get(i, 1));
-    }
-    let xData = [];
-    let yData = [];
-    for (let data of dataset) {
-      xData.push(dot(data, xVector));
-      yData.push(dot(data, yVector));
-    }
-
-    xData = ApiProvider.minMaxNormalize(xData);
-    yData = ApiProvider.minMaxNormalize(yData);
-
-    let positionsByPCA = [];
-    for (let i = 0; i < sampleNum; i++) {
-      positionsByPCA.push([xData[i] * 100, yData[i] * 100]);
-    }
-
-    return positionsByPCA;
-  },
-
-  createDataByVariance: (featureData, songNames) => {
-    const features = Object.keys(featureData);
-    let variances = [];
-    for (let feature of features) {
-      variances.push([variance(featureData[feature]), feature]);
-    }
-    variances.sort((a, b) => b[0] - a[0]);
-    const xFeature = variances[0][1];
-    const yFeature = variances[1][1];
-
-    let xData = featureData[xFeature];
-    let yData = featureData[yFeature];
-
-    xData = ApiProvider.minMaxNormalize(xData);
-    yData = ApiProvider.minMaxNormalize(yData);
-
-    const songNum = songNames.length;
-    let songData = []
-    for (let i = 0; i < songNum; i++) {
-      songData.push({
-        songName: songNames[i],
-        position: [xData[i] * 100, yData[i] * 100]
-      });
-    }
-    return { features: [xFeature, yFeature], songs: songData };
-  },
-
-  createDataBySelection: (featureData, songNames, xFeature, yFeature) => {
-    let xData = featureData[xFeature];
-    let yData = featureData[yFeature];
-
-    xData = ApiProvider.minMaxNormalize(xData);
-    yData = ApiProvider.minMaxNormalize(yData);
-
-    const songNum = songNames.length;
-    let songData = []
-    for (let i = 0; i < songNum; i++) {
-      songData.push({
-        songName: songNames[i],
-        position: [xData[i] * 100, yData[i] * 100]
-      });
-    }
-    return { features: [xFeature, yFeature], songs: songData };
   }
 };
 

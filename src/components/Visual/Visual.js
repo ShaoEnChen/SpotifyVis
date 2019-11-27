@@ -14,15 +14,33 @@ class Visual extends React.Component {
   constructor() {
     super();
     this.state = {
+      similarityAlgorithm: 'PCA',
+      xAxisFeature: null,
+      yAxisFeature: null,
       playlist_batch_index: 0
     };
   }
 
+  setAlgorithm(algorithm) {
+    this.setState({ similarityAlgorithm: algorithm }, () => {
+      ApiProvider.getSongsCanvasPosition(this);
+    });
+  }
+
+  setAxisFeatures(xFeature, yFeature) {
+    this.setState({
+      xAxisFeature: xFeature,
+      yAxisFeature: yFeature
+    }, () => {
+      ApiProvider.getSongsCanvasPosition(this);
+    });
+  }
+
   componentDidMount() {
-    //Flow :
-    //AccessToken, playListId -> tracks, tracksArray -> tracks audio features
-    //Use Javascript Promise object to concatenate response and step by step
-    //store result into State
+    // Flow :
+    // AccessToken, playListId -> tracks, tracksArray -> tracks audio features
+    // Use Javascript Promise object to concatenate response and step by step
+    // store result into State
 
     const clientId = process.env.REACT_APP_CLIENT_ID;
     const clientSecret = process.env.REACT_APP_CLIENT_SECRET;
@@ -56,7 +74,7 @@ class Visual extends React.Component {
       // TODO: we have to send this request multiple times to get all tracks.
     }).then(() => {
       ApiProvider.spotifyGetTracksAndAudioFeatures(spotifyApi, playlistId, this);
-      
+
     }).catch((error) => {
       console.log(error);
     });
@@ -73,7 +91,14 @@ class Visual extends React.Component {
 
     return (
       <ThemeProvider theme={theme}>
-        <Navbar location={path} history={history} />
+        <Navbar
+          location={path}
+          history={history}
+          similarityAlgorithm={this.state.similarityAlgorithm}
+          setAlgorithm={this.setAlgorithm.bind(this)}
+          xAxisFeature={this.state.xAxisFeature}
+          yAxisFeature={this.state.yAxisFeature}
+          setAxisFeatures={this.setAxisFeatures.bind(this)} />
         <VisualDrawer playlistId={playlistId} />
         <SongsViz tracks={this.state.tracks} />
       </ThemeProvider>

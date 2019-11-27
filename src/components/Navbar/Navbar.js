@@ -9,19 +9,29 @@ import VisualNav from './VisualNav';
 
 class Navbar extends React.Component {
   render() {
-    const { classes, location, history } = this.props;
+    const {
+      classes,location, history,
+      similarityAlgorithm, setAlgorithm,
+      xAxisFeature, yAxisFeature, setAxisFeatures
+    } = this.props;
     return (
-      <AppBar position="fixed" className={ classes.appBar }>
-        <Toolbar className={ classes.toolbar }>
+      <AppBar position="fixed" className={classes.appBar}>
+        <Toolbar className={classes.toolbar}>
           <Typography
-            variant="h6" color="inherit" className={ classes.title }
-            component={ Link } to="/">
+            variant="h6" color="inherit" className={classes.title}
+            component={Link} to="/">
             SpotifyViz
           </Typography>
           {
             location === '/' ?
               <HomeNav history={history} /> :
-              <VisualNav history={history} />
+              <VisualNav
+                history={history}
+                similarityAlgorithm={similarityAlgorithm}
+                setAlgorithm={setAlgorithm}
+                xAxisFeature={xAxisFeature}
+                yAxisFeature={xAxisFeature}
+                setAxisFeatures={setAxisFeatures} />
           }
         </Toolbar>
       </AppBar>
@@ -32,14 +42,14 @@ class Navbar extends React.Component {
 const styles = (theme) => {
   return ({
     toolbar: {
-			justifyContent: 'space-between'
-		},
+      justifyContent: 'space-between'
+    },
     title: {
-			textDecoration: 'none'
+      textDecoration: 'none'
     },
     appBar: {
-			zIndex: theme.zIndex.drawer + 100
-		}
+      zIndex: theme.zIndex.drawer + 100
+    }
   });
 };
 
