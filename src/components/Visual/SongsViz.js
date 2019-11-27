@@ -37,18 +37,6 @@ class SongsViz extends React.Component {
     context.restore();
   }
 
-  reset = (canvas, zoomSetting) => {
-    const ctx = canvas.node().getContext('2d');
-    const width = ctx.canvas.width;
-    const height = ctx.canvas.height;
-
-    canvas.transition().duration(500).call(
-      zoomSetting.transform,
-      d3.zoomIdentity,
-      d3.zoomTransform(canvas.node()).invert([width / 2, height / 2])
-    );
-  }
-
   createViz = () => {
     const indent = this.indent.current;
     const context = this.viz.current;
@@ -61,12 +49,16 @@ class SongsViz extends React.Component {
     const canvasWidth = context.offsetWidth;
 
     // Remove previous canvas if any for update
-    d3.select(context).select('canvas').remove();
+    // console.log(d3.select(context).select('canvas').empty())
+    // d3.select(context).select('canvas').remove();
 
-    const canvas = d3.select(context)
-                    .append('canvas')
-                    .attr('width', canvasWidth)
-                    .attr('height', canvasHeight);
+    const canvas = (d3.select(context).select('canvas').empty()) ?
+                    d3.select(context)
+                      .append('canvas')
+                      .attr('width', canvasWidth)
+                      .attr('height', canvasHeight) :
+                    d3.select(context).select('canvas');
+                    
     const ctx = canvas.node().getContext('2d');
     const zoomSetting = d3.zoom()
                           .scaleExtent([1, 8])
@@ -83,6 +75,18 @@ class SongsViz extends React.Component {
     canvas.on('click', () => {
       this.reset(canvas, zoomSetting);
     });
+  }
+
+  reset = (canvas, zoomSetting) => {
+    const ctx = canvas.node().getContext('2d');
+    const width = ctx.canvas.width;
+    const height = ctx.canvas.height;
+
+    canvas.transition().duration(500).call(
+      zoomSetting.transform,
+      d3.zoomIdentity,
+      d3.zoomTransform(canvas.node()).invert([width / 2, height / 2])
+    );
   }
 
   render() {

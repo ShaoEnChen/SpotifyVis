@@ -11,8 +11,10 @@ class VisualNav extends React.Component {
     this.state = {
       algorithmDropdownElement: null,
       featuresSelectionShow: false,
-      xAxisFeatureDropdownElement: null,
-      yAxisFeatureDropdownElement: null
+      xSelection: null,
+      xAxisDropdownElement: null,
+      ySelection: null,
+      yAxisDropdownElement: null
     };
   }
 
@@ -20,16 +22,53 @@ class VisualNav extends React.Component {
     this.setState({ [state]: event.currentTarget });
   }
 
-  handleDropdownClose = (state) => {
-    this.setState({ [state]: null });
+  handleDropdownClose = (stateKey) => {
+    this.setState({ [stateKey]: null });
   }
 
   setAlgorithmOnMenu = (algorithm) => {
     const { setAlgorithm } = this.props;
-
     setAlgorithm(algorithm);
     this.setState({ featuresSelectionShow: algorithm === 'Customed' });
     this.handleDropdownClose('algorithmDropdownElement');
+  }
+
+  setAxisFeaturesOnMenu = (axis, feature) => {
+    const { setAxisFeatures } = this.props;
+    let dropdownElement, selectionKey;
+    if (axis === 'x') {
+      dropdownElement = 'xAxisDropdownElement';
+      selectionKey = 'xSelection';
+      setAxisFeatures(feature, this.state.ySelection);
+    } else {
+      dropdownElement = 'yAxisDropdownElement';
+      selectionKey = 'ySelection';
+      setAxisFeatures(this.state.xSelection, feature);
+    }
+    this.setState({ [selectionKey]: feature });
+    this.handleDropdownClose(dropdownElement);
+  }
+
+  getCustomedFeatures(axis) {
+    const features = [
+      'acousticness',
+      'danceability',
+      'energy',
+      'instrumentalness',
+      'liveness',
+      'loudness',
+      'speechiness',
+      'tempo',
+      'valence'
+    ];
+    let options = features.map((feature) => {
+      return (
+        <MenuItem key={feature} onClick={() => { this.setAxisFeaturesOnMenu(axis, feature) }}>
+          {feature}
+        </MenuItem>
+      );
+    });
+    return options;
   }
 
   render() {
@@ -60,27 +99,52 @@ class VisualNav extends React.Component {
           <MenuItem onClick={() => { this.setAlgorithmOnMenu('Variance') }}>Variance</MenuItem>
           <MenuItem onClick={() => { this.setAlgorithmOnMenu('Customed') }}>Customed</MenuItem>
         </Menu>
+
         {/* Options of features for customed comparison */}
-        {/* <Button
-          aria-controls="xAxisFeature-menu"
-          aria-haspopup="true"
-          onClick={(e) => this.handleDropdownOpen(e, 'xAxisFeatureDropdownElement')}
-          className={classes.button}>
-          X-Axis: {xAxisFeature}
-        </Button>
-        <Menu
-          id="xAxisFeature-menu"
-          getContentAnchorEl={null}
-          anchorEl={this.state.xAxisFeatureDropdownElement}
-          keepMounted
-          open={Boolean(this.state.xAxisFeatureDropdownElement)}
-          anchorOrigin={{
-            vertical: 'bottom',
-            horizontal: 'center'
-          }}
-          onClose={() => this.handleDropdownClose('xAxisFeatureDropdownElement')}>
-          {xAxisOptions}
-        </Menu> */}
+        {this.state.featuresSelectionShow === true && (
+          <React.Fragment>
+            <Button
+              aria-controls="xAxisFeature-menu"
+              aria-haspopup="true"
+              onClick={(e) => this.handleDropdownOpen(e, 'xAxisDropdownElement')}
+              className={classes.button}>
+              X-Axis: {xAxisFeature}
+            </Button>
+            <Menu
+              id="xAxisFeature-menu"
+              getContentAnchorEl={null}
+              anchorEl={this.state.xAxisDropdownElement}
+              keepMounted
+              open={Boolean(this.state.xAxisDropdownElement)}
+              anchorOrigin={{
+                vertical: 'bottom',
+                horizontal: 'center'
+              }}
+              onClose={() => this.handleDropdownClose('xAxisDropdownElement')}>
+              {this.getCustomedFeatures('x')}
+            </Menu>
+            <Button
+              aria-controls="yAxisFeature-menu"
+              aria-haspopup="true"
+              onClick={(e) => this.handleDropdownOpen(e, 'yAxisDropdownElement')}
+              className={classes.button}>
+              Y-Axis: {yAxisFeature}
+            </Button>
+            <Menu
+              id="yAxisFeature-menu"
+              getContentAnchorEl={null}
+              anchorEl={this.state.yAxisDropdownElement}
+              keepMounted
+              open={Boolean(this.state.yAxisDropdownElement)}
+              anchorOrigin={{
+                vertical: 'bottom',
+                horizontal: 'center'
+              }}
+              onClose={() => this.handleDropdownClose('yAxisDropdownElement')}>
+              {this.getCustomedFeatures('y')}
+            </Menu>
+          </React.Fragment>
+        )}
         <PlaylistInput history={history} />
       </React.Fragment>
     );

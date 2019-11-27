@@ -42,7 +42,7 @@ const ApiProvider = {
     
     if (algorithm === 'Variance') {
       return Algorithm.createDataByVariance(audioFeatures);
-    } else if (xFeature && yFeature) {
+    } else if (algorithm === 'Customed' && xFeature && yFeature) {
       return Algorithm.createDataBySelection(audioFeatures, xFeature, yFeature);
     } else {
       return Algorithm.createDataByPCA(audioFeatures);

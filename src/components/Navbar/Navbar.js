@@ -30,7 +30,7 @@ class Navbar extends React.Component {
                 similarityAlgorithm={similarityAlgorithm}
                 setAlgorithm={setAlgorithm}
                 xAxisFeature={xAxisFeature}
-                yAxisFeature={xAxisFeature}
+                yAxisFeature={yAxisFeature}
                 setAxisFeatures={setAxisFeatures} />
           }
         </Toolbar>
