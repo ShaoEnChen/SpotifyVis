@@ -2,9 +2,61 @@ import axios from 'axios';
 import Algorithm from './SimilarityAlgorithm';
 
 const MaxArtistsPerRequest = 50;
+const MaxTracksPerRequest = 100;
+
+
+async function audioFeaturesHelper(tracks, spotifyApi, that) {
+  const trackIds = tracks.map((track) => track.id);
+  //console.log('entering main track features function');
+
+  for (let startIndex = 0; startIndex < tracks.length; startIndex += MaxTracksPerRequest) {
+    //console.log('calling a batch of track features');
+    let endIndex = Math.min(startIndex + MaxTracksPerRequest, tracks.length);
+    const idBatch = trackIds.slice(startIndex, endIndex);
+    await spotifyApi.getAudioFeaturesForTracks(idBatch).then((data) => {
+      data.audio_features.forEach((element, index) => {
+        const audioFeatures = {
+          acousticness: element.acousticness,
+          danceability: element.danceability,
+          energy: element.energy,
+          instrumentalness: element.instrumentalness,
+          liveness: element.liveness,
+          loudness: element.loudness,
+          speechiness: element.speechiness,
+          valence: element.valence,
+          tempo: element.tempo,
+        };
+        tracks[startIndex + index] = {
+          ...tracks[startIndex + index],
+          audioFeatures
+        }
+      });
+      return Promise.resolve(tracks);
+    });
+  }
+  return Promise.resolve(tracks);
+}
+
+async function genresHelper(tracks, that) {
+  for (let startIndex = 0; startIndex < tracks.length; startIndex += MaxArtistsPerRequest) {
+
+    await ApiProvider.spotifyGetGenresForBatchOfTracks(startIndex, tracks, that).then(genresBatch => {
+      genresBatch.forEach((genres, genreIndex) => {
+        tracks[startIndex + genreIndex] = {
+          ...tracks[startIndex + genreIndex],
+          genres
+        }
+      });
+    });
+  }
+  //console.log('calling song positions');
+  that.setState({ tracks }, () => {
+    ApiProvider.getSongsCanvasPosition(that);
+  });
+}
 
 const ApiProvider = {
-  
+
   getSongsCanvasPosition: (that) => {
     const tracks = that.state.tracks;
     const featuresBase = {
@@ -39,7 +91,7 @@ const ApiProvider = {
     const algorithm = state.similarityAlgorithm;
     const xFeature = state.xAxisFeature;
     const yFeature = state.yAxisFeature;
-    
+
     if (algorithm === 'Variance') {
       return Algorithm.createDataByVariance(audioFeatures);
     } else if (algorithm === 'Customed' && xFeature && yFeature) {
@@ -49,79 +101,52 @@ const ApiProvider = {
     }
   },
 
+
+
   spotifyGetTracksAndAudioFeatures: (spotifyApi, playlistId, that) => {
     spotifyApi.setAccessToken(that.state.accessToken);
-    spotifyApi.getPlaylistTracks(playlistId).then((data) => {
+    ApiProvider.spotifyGetPlaylistTrackCount(playlistId, that).then((data) => {
+      const total = data.total;
       let tracks = [];
-      data.items.forEach((arrayItem) => {
-        let track = {
-          songName: arrayItem.track.name,
-          id: arrayItem.track.id,
-          artist: arrayItem.track.artists,
-          album: arrayItem.track.album
-        };
-        tracks.push(track);
-      });
-      return tracks;
-
-    }).then((tracks) => {
-      ApiProvider.spotifyGetAudioFeatures(tracks, spotifyApi, that);
-
-    }).catch((error) => {
-      console.log(error);
-    });
+      for (var index = 0; index < data.total; index += MaxTracksPerRequest) {
+        ApiProvider.spotifyGetPlaylistTrackBatch(playlistId, index, that).then((data) => {
+          data.items.forEach((arrayItem) => {
+            let track = {
+              songName: arrayItem.track.name,
+              id: arrayItem.track.id,
+              artist: arrayItem.track.artists,
+            };
+            tracks.push(track);
+          });
+          if (tracks.length === total) {
+            //console.log('about to call main track features');
+            ApiProvider.spotifyGetAudioFeatures(tracks, spotifyApi, that);
+          }
+        });
+      }
+    })
   },
 
   spotifyGetAudioFeatures: (tracks, spotifyApi, that) => {
-    const trackIds = tracks.map((track) => track.id);
-    spotifyApi.getAudioFeaturesForTracks(trackIds).then((data) => {
-      data.audio_features.forEach((element, index) => {
-        const audioFeatures = {
-          acousticness: element.acousticness,
-          danceability: element.danceability,
-          energy: element.energy,
-          instrumentalness: element.instrumentalness,
-          liveness: element.liveness,
-          loudness: element.loudness,
-          speechiness: element.speechiness,
-          valence: element.valence,
-          tempo: element.tempo,
-        };
-        tracks[index] = {
-          ...tracks[index],
-          audioFeatures
-        }
-      });
-      return tracks;
-
-    }).then((tracks) => {
-      ApiProvider.spotifyGetGenresForAllTracks(tracks, that);
+    audioFeaturesHelper(tracks, spotifyApi, that).then((data) => {
+        ApiProvider.spotifyGetGenresForAllTracks(data, that);
     });
+
+
   },
 
   // Retrevies track genres
   // Calls a subroutine for batching. Makes promises and assigns as they come in
   // We probably need error checking here (or not. Caching is hard)
-  // FIXME: the promises resolve asynchronously. We need to keep them in order or rearrange as they come in
   spotifyGetGenresForAllTracks: (tracks, that) => {
-    for (let startIndex = 0; startIndex < tracks.length; startIndex += MaxArtistsPerRequest) {
-      ApiProvider.spotifyGetGenresForBatchOfTracks(startIndex, tracks, that).then(genresBatch => {
-        genresBatch.forEach((genres, genreIndex) => {
-          tracks[startIndex + genreIndex] = {
-            ...tracks[startIndex + genreIndex],
-            genres
-          }
-        });
-      });
-    }
-    that.setState({ tracks }, () => {
-      ApiProvider.getSongsCanvasPosition(that);
-    });
+    //console.log('starting main genres');
+    genresHelper(tracks, that);
   },
 
   // Retrieves the genres assigned to the first artist of a track and assigns them to the track.
   // Performs this operation for a maximum of 50 tracks, as per Spotify's API limit.
   spotifyGetGenresForBatchOfTracks: (startIndex, tracks, that) => {
+    //console.log('calling a batch of genres');
     let index = startIndex;
     let endIndex = Math.min(startIndex + MaxArtistsPerRequest, tracks.length) - 1;
     let idBatch = '';
@@ -156,41 +181,38 @@ const ApiProvider = {
   },
 
   // Retrieves the total number of songs that we're going to need to grab.
-  spotifyGetPlaylistTrackCount: (accessToken, playlistId, that) => {
+  spotifyGetPlaylistTrackCount: (playlistId, that) => {
     axios.defaults.headers.common = {
-      'Authorization': 'Bearer ' + accessToken
+      'Authorization': 'Bearer ' + that.state.accessToken
     };
 
-    axios.get('https://api.spotify.com/v1/playlists/' + playlistId + '/tracks', {
+    let response = axios.get('https://api.spotify.com/v1/playlists/' + playlistId + '/tracks', {
       params: {
         'fields': 'total'
       }
     }).then((response) => {
-      console.log(response.data);
-      // that.setState({
-      //   // Should not set the total number of tracks to tracksAudioFeatures
-      //   tracksAudioFeatures: response.data.total
-      // });
-
+      return response.data;
     }).catch((error) => {
       console.log(error);
     });
+    return response;
   },
 
-  spotifyGetPlaylistBatch: (accessToken, playlistId) => {
+  spotifyGetPlaylistTrackBatch: (playlistId, index, that) => {
     axios.defaults.headers.common = {
-      'Authorization': 'Bearer ' + accessToken
+      'Authorization': 'Bearer ' + that.state.accessToken
     };
-    axios.get('https://api.spotify.com/v1/playlists/' + playlistId + '/tracks', {
+    return axios.get('https://api.spotify.com/v1/playlists/' + playlistId + '/tracks', {
       params: {
-        'fields': 'items(track(id))',
-        'offset': 0
+        'fields': 'items(track(id, name, artists))',
+        'offset': index
       }
     }).then((response) => {
-      console.log(response.data);
+      //console.log(response.data);
+      return response.data;
     }).catch((error) => {
       console.log(error);
-    });;
+    });
   }
 };
 
