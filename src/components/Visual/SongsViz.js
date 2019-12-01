@@ -19,22 +19,33 @@ class SongsViz extends React.Component {
     return [x, y];
   }
 
-  zoomed(context, transform) {
+  zoomed(context, transform, paths) {
     const zoomScale = transform.k;
     const radius = 5 * zoomScale;
     const tracks = this.props.tracks;
+    paths.length = 0;
 
-    context.save();
     context.clearRect(0, 0, context.canvas.width, context.canvas.height);
-    context.beginPath();
-    for (let trackIndex in tracks) {
-      let position = this.rescale(context, tracks[trackIndex].position);
-      const [x, y] = transform.apply(position);
-      context.moveTo(x + radius, y);
-      context.arc(x, y, radius, 0, 2 * Math.PI);
+    if (zoomScale < 2.5) {
+      for (let trackIndex in tracks) {
+        let path = new Path2D();
+        let position = this.rescale(context, tracks[trackIndex].position);
+        const [x, y] = transform.apply(position);
+        path.moveTo(x + radius, y);
+        path.arc(x, y, radius, 0, 2 * Math.PI);
+        context.fill(path);
+        paths.push(path);
+      }
+
+    } else {
+      for (let trackIndex in tracks) {
+        let position = this.rescale(context, tracks[trackIndex].position);
+        const [x, y] = transform.apply(position);
+        context.fillText(tracks[trackIndex].songName, x, y);
+      }
     }
-    context.fill();
-    context.restore();
+
+    return paths;
   }
 
   createViz = () => {
@@ -48,32 +59,59 @@ class SongsViz extends React.Component {
     const canvasHeight = contextHeight - contextPadding.top - contextPadding.bottom;
     const canvasWidth = context.offsetWidth;
 
-    // Remove previous canvas if any for update
-    // console.log(d3.select(context).select('canvas').empty())
-    // d3.select(context).select('canvas').remove();
-
-    const canvas = (d3.select(context).select('canvas').empty()) ?
+    const canvas = d3.select(context).select('canvas').empty() ?
                     d3.select(context)
                       .append('canvas')
                       .attr('width', canvasWidth)
                       .attr('height', canvasHeight) :
                     d3.select(context).select('canvas');
-                    
+
     const ctx = canvas.node().getContext('2d');
+
+    let paths = [];
     const zoomSetting = d3.zoom()
                           .scaleExtent([1, 8])
                           .on('zoom', () => {
-                            this.zoomed(ctx, d3.event.transform);
+                            this.zoomed(ctx, d3.event.transform, paths);
                           });
 
     d3.select(ctx.canvas).call(zoomSetting);
     
-    // Initial drawing on scale 1
-    this.zoomed(ctx, d3.zoomIdentity);
+    // Initiate drawing on scale 1
+    this.zoomed(ctx, d3.zoomIdentity, paths);
     
     // Zoom out to scale when clicked
     canvas.on('click', () => {
       this.reset(canvas, zoomSetting);
+    });
+
+    let lastPathMouseOn = null;
+    canvas.on('mousemove', () => {
+      const [mouseX, mouseY] = d3.mouse(canvas.node());
+      let newPathFound = false;
+
+      // If mouse is on the last path, then no-op
+      if (!lastPathMouseOn || !ctx.isPointInPath(lastPathMouseOn, mouseX, mouseY)) {
+        for (let path of paths) {
+          if(ctx.isPointInPath(path, mouseX, mouseY)) {
+            newPathFound = true;
+            if (lastPathMouseOn) {
+              ctx.fillStyle = '#000';
+              ctx.fill(lastPathMouseOn);
+            }
+
+            lastPathMouseOn = path;
+            ctx.fillStyle = '#ff0000';
+            ctx.fill(path);
+            break;
+          };
+        }
+        if (!newPathFound && lastPathMouseOn) {
+          ctx.fillStyle = '#000';
+          ctx.fill(lastPathMouseOn);
+          lastPathMouseOn = null;
+        }
+      }
     });
   }
 
