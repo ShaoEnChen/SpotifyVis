@@ -4,7 +4,6 @@ import Algorithm from './SimilarityAlgorithm';
 const MaxArtistsPerRequest = 50;
 const MaxTracksPerRequest = 100;
 
-
 async function audioFeaturesHelper(tracks, spotifyApi, that) {
   const trackIds = tracks.map((track) => track.id);
   //console.log('entering main track features function');

@@ -42,7 +42,6 @@ class Visual extends React.Component {
       return;
     }
 
-    let newGenresDictionary = {};
     let filteredTracks = [];
     for (const track of tracks) {
       let shouldAddTrack = true;
@@ -54,24 +53,44 @@ class Visual extends React.Component {
       }
       if (shouldAddTrack) {
         filteredTracks.push(track);
-        for (const genre of track.genres) {
-          if (!(genre in newGenresDictionary)) {
-            newGenresDictionary[genre] = 1;
-          } else {
-            newGenresDictionary[genre] += 1;
-          }
-        }
       }
     }
-
-    this.setState({ genresDictionary: newGenresDictionary })
     return filteredTracks;
   }
 
-  toggleGenre(genre) {
+  toggleGenre(toggledGenre) {
     let genresFilter = this.state.genresFilter;
-    genresFilter[genre] = !genresFilter[genre];
-    this.setState({ genresFilter });
+    genresFilter[toggledGenre] = !genresFilter[toggledGenre];
+    
+    let genresDictionary = this.state.genresDictionary;
+    for (const genre in genresDictionary) {
+      genresDictionary[genre] = 0;
+    }
+
+    const tracks = this.state.tracks;
+    for (const track of tracks) {
+      let shouldCountTrack = true;
+      for(const genre of track.genres) {
+        if (genresFilter[genre] === false) {
+          shouldCountTrack = false;
+          break;
+        }
+      }
+      if (shouldCountTrack) {
+        track.genres.forEach((genre) => {
+          if (!(genre in genresDictionary)) {
+            genresDictionary[genre] = 1;
+          } else {
+            genresDictionary[genre] += 1;
+          }
+        });
+      }
+    }
+    
+    this.setState({
+      genresDictionary,
+      genresFilter
+    });
   }
 
   componentDidMount() {
