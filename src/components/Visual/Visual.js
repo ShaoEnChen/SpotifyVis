@@ -42,15 +42,29 @@ class Visual extends React.Component {
       return;
     }
 
+    let newGenresDictionary = {};
     let filteredTracks = [];
     for (const track of tracks) {
+      let shouldAddTrack = true;
       for (const genre of track.genres) {
-        if (genresFilter[genre] === true) {
-          filteredTracks.push(track);
-          continue;
+        if (genresFilter[genre] === false) {
+          shouldAddTrack = false;
+          break;
+        }
+      }
+      if (shouldAddTrack) {
+        filteredTracks.push(track);
+        for (const genre of track.genres) {
+          if (!(genre in newGenresDictionary)) {
+            newGenresDictionary[genre] = 1;
+          } else {
+            newGenresDictionary[genre] += 1;
+          }
         }
       }
     }
+
+    this.setState({ genresDictionary: newGenresDictionary })
     return filteredTracks;
   }
 
@@ -123,6 +137,7 @@ class Visual extends React.Component {
           xAxisFeature={this.state.xAxisFeature}
           yAxisFeature={this.state.yAxisFeature}
           setAxisFeatures={this.setAxisFeatures.bind(this)}
+          genresDictionary={this.state.genresDictionary}
           genresFilter={this.state.genresFilter}
           toggleGenre={this.toggleGenre.bind(this)} />
         <VisualDrawer playlistId={playlistId} />

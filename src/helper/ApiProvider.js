@@ -39,13 +39,17 @@ async function audioFeaturesHelper(tracks, spotifyApi, that) {
 
 async function genresHelper(tracks, that) {
 
-  const genresSet = new Set();
+  const genresDictionary = {};
 
   for (let startIndex = 0; startIndex < tracks.length; startIndex += MaxArtistsPerRequest) {
     await ApiProvider.spotifyGetGenresForBatchOfTracks(startIndex, tracks, that).then(genresBatch => {
       genresBatch.forEach((genres, genreIndex) => {
         genres.forEach((genre) => {
-          genresSet.add(genre);
+          if (!(genre in genresDictionary)) {
+            genresDictionary[genre] = 1;
+          } else {
+            genresDictionary[genre] += 1;
+          }
         });
 
         tracks[startIndex + genreIndex] = {
@@ -58,7 +62,9 @@ async function genresHelper(tracks, that) {
   //console.log('calling song positions');
   that.setState({
     tracks,
-    genresFilter: [...genresSet].reduce((filter, genre) => {
+    genresDictionary,
+    genresFilter: Object.keys(genresDictionary).reduce((filter, genre) => {
+      // Default to show all tracks
       filter[genre] = true;
       return filter;
     }, {})

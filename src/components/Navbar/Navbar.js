@@ -13,7 +13,7 @@ class Navbar extends React.Component {
       classes, location, history,
       similarityAlgorithm, setAlgorithm,
       xAxisFeature, yAxisFeature, setAxisFeatures,
-      genresFilter, toggleGenre
+      genresDictionary, genresFilter, toggleGenre
     } = this.props;
     return (
       <AppBar position="fixed" className={classes.appBar}>
@@ -33,6 +33,7 @@ class Navbar extends React.Component {
                 xAxisFeature={xAxisFeature}
                 yAxisFeature={yAxisFeature}
                 setAxisFeatures={setAxisFeatures}
+                genresDictionary={genresDictionary}
                 genresFilter={genresFilter}
                 toggleGenre={toggleGenre} />
           }

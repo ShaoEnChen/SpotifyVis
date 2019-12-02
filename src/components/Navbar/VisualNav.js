@@ -75,21 +75,22 @@ class VisualNav extends React.Component {
   }
 
   getGenreOptions() {
-    const { genresFilter } = this.props;
-    if (!genresFilter) {
+    const { genresDictionary, genresFilter } = this.props;
+    if (!genresDictionary || !genresFilter) {
       return;
     }
 
-    let options = Object.keys(genresFilter).map((genre) => {
-      return (
+    let options = [];
+    for (const genre in genresDictionary) {
+      options.push(
         <MenuItem key={genre} onClick={() => {
           this.props.toggleGenre(genre);
           this.handleDropdownClose('genresDropdownElement');
         }}>
-          {genre}
+          {genre} {genresFilter[genre] === true ? genresDictionary[genre] : 0}
         </MenuItem>
       );
-    });
+    }
     return options;
   }
 
