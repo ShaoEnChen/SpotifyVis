@@ -19,22 +19,32 @@ class SongsViz extends React.Component {
     return [x, y];
   }
 
-  zoomed(context, transform, paths) {
+  zoomed(context, transform, drawnTracks) {
     const zoomScale = transform.k;
     const radius = 5 * zoomScale;
     const tracks = this.props.tracks;
-    paths.length = 0;
+    drawnTracks.length = 0;
 
     context.clearRect(0, 0, context.canvas.width, context.canvas.height);
     if (zoomScale < 2.5) {
       for (let trackIndex in tracks) {
-        let path = new Path2D();
-        let position = this.rescale(context, tracks[trackIndex].position);
+        const track = tracks[trackIndex];
+        const path = new Path2D();
+        const position = this.rescale(context, track.position);
         const [x, y] = transform.apply(position);
+
         path.moveTo(x + radius, y);
         path.arc(x, y, radius, 0, 2 * Math.PI);
         context.fill(path);
-        paths.push(path);
+
+        drawnTracks.push({
+          path,
+          position: [x, y],
+          songName: track.songName,
+          artists: track.artists.map(artist => artist.name),
+          album: track.album.name,
+          genres: track.genres
+        });
       }
 
     } else {
@@ -45,73 +55,106 @@ class SongsViz extends React.Component {
       }
     }
 
-    return paths;
+    return drawnTracks;
   }
 
   createViz = () => {
     const indent = this.indent.current;
-    const context = this.viz.current;
+    const viz = this.viz.current;
     const contextHeight = window.innerHeight - indent.offsetHeight;
     const contextPadding = {
       top: 10,
       bottom: 10
     };
     const canvasHeight = contextHeight - contextPadding.top - contextPadding.bottom;
-    const canvasWidth = context.offsetWidth;
+    const canvasWidth = viz.offsetWidth;
 
-    const canvas = d3.select(context).select('canvas').empty() ?
-                    d3.select(context)
-                      .append('canvas')
-                      .attr('width', canvasWidth)
-                      .attr('height', canvasHeight) :
-                    d3.select(context).select('canvas');
+    const staticCanvas = d3.select(viz)
+                           .select('#static')
+                           .attr('width', canvasWidth)
+                           .attr('height', canvasHeight);
 
-    const ctx = canvas.node().getContext('2d');
+    const dynamicCanvas = d3.select(viz)
+                            .select('#dynamic')
+                            .attr('width', canvasWidth)
+                            .attr('height', canvasHeight);
 
-    let paths = [];
+    const canvasColor = {
+      background: '#fff',
+      normal: '#000',
+      highlight: '#f00'
+    }
+    const staticContext = staticCanvas.node().getContext('2d');
+    const dynamicContext = dynamicCanvas.node().getContext('2d');
+
+    let drawnTracks = [];
+    let lastTrackMouseOn = null;
     const zoomSetting = d3.zoom()
                           .scaleExtent([1, 8])
                           .on('zoom', () => {
-                            this.zoomed(ctx, d3.event.transform, paths);
+                            staticContext.fillStyle = canvasColor.normal;
+                            lastTrackMouseOn = null;
+                            this.zoomed(staticContext, d3.event.transform, drawnTracks);
                           });
 
-    d3.select(ctx.canvas).call(zoomSetting);
-    
-    // Initiate drawing on scale 1
-    this.zoomed(ctx, d3.zoomIdentity, paths);
-    
-    // Zoom out to scale when clicked
-    canvas.on('click', () => {
-      this.reset(canvas, zoomSetting);
-    });
+    d3.select(dynamicContext.canvas).call(zoomSetting);
 
-    let lastPathMouseOn = null;
-    canvas.on('mousemove', () => {
-      const [mouseX, mouseY] = d3.mouse(canvas.node());
+    // Initiate drawing on scale 1
+    this.zoomed(staticContext, d3.zoomIdentity, drawnTracks);
+
+    dynamicCanvas.on('mousemove', () => {
+      const [mouseX, mouseY] = d3.mouse(dynamicCanvas.node());
       let newPathFound = false;
 
       // If mouse is on the last path, then no-op
-      if (!lastPathMouseOn || !ctx.isPointInPath(lastPathMouseOn, mouseX, mouseY)) {
-        for (let path of paths) {
-          if(ctx.isPointInPath(path, mouseX, mouseY)) {
+      // If no previous record or mouse not on the last path, then:
+      if (!lastTrackMouseOn || !staticContext.isPointInPath(lastTrackMouseOn.path, mouseX, mouseY)) {
+        for (let track of drawnTracks) {
+          if (staticContext.isPointInPath(track.path, mouseX, mouseY)) {
             newPathFound = true;
-            if (lastPathMouseOn) {
-              ctx.fillStyle = '#000';
-              ctx.fill(lastPathMouseOn);
+            if (lastTrackMouseOn) {
+              // Remove previous highlight
+              staticContext.fillStyle = canvasColor.normal;
+              staticContext.fill(lastTrackMouseOn.path);
+
+              staticContext.fillStyle = canvasColor.background;
+              staticContext.fillText(
+                lastTrackMouseOn.songName,
+                lastTrackMouseOn.position[0],
+                lastTrackMouseOn.position[1]
+              );
             }
 
-            lastPathMouseOn = path;
-            ctx.fillStyle = '#ff0000';
-            ctx.fill(path);
+            // Highlight current drawnTrack
+            lastTrackMouseOn = track;
+            staticContext.fillStyle = canvasColor.highlight;
+            staticContext.fill(track.path);
+
+            dynamicContext.fillText(
+              track.songName,
+              track.position[0],
+              track.position[1]
+            );
+
             break;
           };
         }
-        if (!newPathFound && lastPathMouseOn) {
-          ctx.fillStyle = '#000';
-          ctx.fill(lastPathMouseOn);
-          lastPathMouseOn = null;
+        if (!newPathFound && lastTrackMouseOn) {
+          staticContext.fillStyle = canvasColor.normal;
+          staticContext.fill(lastTrackMouseOn.path);
+
+          dynamicContext.clearRect(0, 0, canvasWidth, canvasHeight);
+
+          lastTrackMouseOn = null;
         }
       }
+
+      // Zoom out to scale when clicked
+      dynamicCanvas.on('click', () => {
+        staticContext.fillStyle = canvasColor.normal;
+        lastTrackMouseOn = null;
+        this.reset(dynamicCanvas, zoomSetting);
+      });
     });
   }
 
@@ -129,13 +172,17 @@ class SongsViz extends React.Component {
 
   render() {
     const { classes } = this.props;
+
     if (this.props.tracks && this.props.tracks[0].position) {
       this.createViz();
     }
     return (
       <Container className={classes.container}>
         <div ref={this.indent} className={classes.toolbarIndent}></div>
-        <div ref={this.viz} className={classes.context}></div>
+        <div ref={this.viz} className={classes.context}>
+          <canvas id="dynamic" className={classes.dynamicCanvas}></canvas>
+          <canvas id="static" className={classes.staticCanvas}></canvas>
+        </div>
       </Container>
     );
   }
@@ -151,8 +198,21 @@ const styles = (theme) => {
     },
     context: {
       display: 'flex',
+      position: 'relative',
       paddingTop: '10px',
       paddingBottom: '10px'
+    },
+    staticCanvas: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      zIndex: 0
+    },
+    dynamicCanvas: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      zIndex: 1
     }
   });
 };
