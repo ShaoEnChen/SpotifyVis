@@ -16,8 +16,7 @@ class Visual extends React.Component {
     this.state = {
       similarityAlgorithm: 'PCA',
       xAxisFeature: null,
-      yAxisFeature: null,
-      playlist_batch_index: 0
+      yAxisFeature: null
     };
   }
 
@@ -34,6 +33,31 @@ class Visual extends React.Component {
     }, () => {
       ApiProvider.getSongsCanvasPosition(this);
     });
+  }
+
+  getGenresFilteredTracks() {
+    const tracks = this.state.tracks;
+    const genresFilter = this.state.genresFilter;
+    if (!tracks || !genresFilter) {
+      return;
+    }
+
+    let filteredTracks = [];
+    for (const track of tracks) {
+      for (const genre of track.genres) {
+        if (genresFilter[genre] === true) {
+          filteredTracks.push(track);
+          continue;
+        }
+      }
+    }
+    return filteredTracks;
+  }
+
+  toggleGenre(genre) {
+    let genresFilter = this.state.genresFilter;
+    genresFilter[genre] = !genresFilter[genre];
+    this.setState({ genresFilter });
   }
 
   componentDidMount() {
@@ -98,9 +122,11 @@ class Visual extends React.Component {
           setAlgorithm={this.setAlgorithm.bind(this)}
           xAxisFeature={this.state.xAxisFeature}
           yAxisFeature={this.state.yAxisFeature}
-          setAxisFeatures={this.setAxisFeatures.bind(this)} />
+          setAxisFeatures={this.setAxisFeatures.bind(this)}
+          genresFilter={this.state.genresFilter}
+          toggleGenre={this.toggleGenre.bind(this)} />
         <VisualDrawer playlistId={playlistId} />
-        <SongsViz tracks={this.state.tracks} />
+        <SongsViz tracks={this.getGenresFilteredTracks()} />
       </ThemeProvider>
     );
   }

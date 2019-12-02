@@ -10,11 +10,14 @@ class VisualNav extends React.Component {
     super();
     this.state = {
       algorithmDropdownElement: null,
+
       featuresSelectionShow: false,
       xSelection: null,
       xAxisDropdownElement: null,
       ySelection: null,
-      yAxisDropdownElement: null
+      yAxisDropdownElement: null,
+
+      genresDropdownElement: null
     };
   }
 
@@ -49,7 +52,7 @@ class VisualNav extends React.Component {
     this.handleDropdownClose(dropdownElement);
   }
 
-  getCustomedFeatures(axis) {
+  getFeatureOptions(axis) {
     const features = [
       'acousticness',
       'danceability',
@@ -63,8 +66,27 @@ class VisualNav extends React.Component {
     ];
     let options = features.map((feature) => {
       return (
-        <MenuItem key={feature} onClick={() => { this.setAxisFeaturesOnMenu(axis, feature) }}>
+        <MenuItem key={feature} onClick={() => { this.setAxisFeaturesOnMenu(axis, feature); }}>
           {feature}
+        </MenuItem>
+      );
+    });
+    return options;
+  }
+
+  getGenreOptions() {
+    const { genresFilter } = this.props;
+    if (!genresFilter) {
+      return;
+    }
+
+    let options = Object.keys(genresFilter).map((genre) => {
+      return (
+        <MenuItem key={genre} onClick={() => {
+          this.props.toggleGenre(genre);
+          this.handleDropdownClose('genresDropdownElement');
+        }}>
+          {genre}
         </MenuItem>
       );
     });
@@ -121,7 +143,7 @@ class VisualNav extends React.Component {
                 horizontal: 'center'
               }}
               onClose={() => this.handleDropdownClose('xAxisDropdownElement')}>
-              {this.getCustomedFeatures('x')}
+              {this.getFeatureOptions('x')}
             </Menu>
             <Button
               aria-controls="yAxisFeature-menu"
@@ -141,10 +163,33 @@ class VisualNav extends React.Component {
                 horizontal: 'center'
               }}
               onClose={() => this.handleDropdownClose('yAxisDropdownElement')}>
-              {this.getCustomedFeatures('y')}
+              {this.getFeatureOptions('y')}
             </Menu>
           </React.Fragment>
         )}
+
+        {/* Options of Genres Filter */}
+        <Button
+          aria-controls="genres-menu"
+          aria-haspopup="true"
+          onClick={(e) => this.handleDropdownOpen(e, 'genresDropdownElement')}
+          className={classes.button}>
+          Genres
+        </Button>
+        <Menu
+          id="genres-menu"
+          getContentAnchorEl={null}
+          anchorEl={this.state.genresDropdownElement}
+          keepMounted
+          open={Boolean(this.state.genresDropdownElement)}
+          anchorOrigin={{
+            vertical: 'bottom',
+            horizontal: 'center'
+          }}
+          onClose={() => this.handleDropdownClose('genresDropdownElement')}>
+          {this.getGenreOptions()}
+        </Menu>
+
         <PlaylistInput history={history} />
       </React.Fragment>
     );

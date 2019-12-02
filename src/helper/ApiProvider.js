@@ -38,10 +38,16 @@ async function audioFeaturesHelper(tracks, spotifyApi, that) {
 }
 
 async function genresHelper(tracks, that) {
-  for (let startIndex = 0; startIndex < tracks.length; startIndex += MaxArtistsPerRequest) {
 
+  const genresSet = new Set();
+
+  for (let startIndex = 0; startIndex < tracks.length; startIndex += MaxArtistsPerRequest) {
     await ApiProvider.spotifyGetGenresForBatchOfTracks(startIndex, tracks, that).then(genresBatch => {
       genresBatch.forEach((genres, genreIndex) => {
+        genres.forEach((genre) => {
+          genresSet.add(genre);
+        });
+
         tracks[startIndex + genreIndex] = {
           ...tracks[startIndex + genreIndex],
           genres
@@ -50,7 +56,13 @@ async function genresHelper(tracks, that) {
     });
   }
   //console.log('calling song positions');
-  that.setState({ tracks }, () => {
+  that.setState({
+    tracks,
+    genresFilter: [...genresSet].reduce((filter, genre) => {
+      filter[genre] = true;
+      return filter;
+    }, {})
+  }, () => {
     ApiProvider.getSongsCanvasPosition(that);
   });
 }
@@ -130,10 +142,8 @@ const ApiProvider = {
 
   spotifyGetAudioFeatures: (tracks, spotifyApi, that) => {
     audioFeaturesHelper(tracks, spotifyApi, that).then((data) => {
-        ApiProvider.spotifyGetGenresForAllTracks(data, that);
+      ApiProvider.spotifyGetGenresForAllTracks(data, that);
     });
-
-
   },
 
   // Retrevies track genres

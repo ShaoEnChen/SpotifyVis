@@ -167,7 +167,7 @@ class SongsViz extends React.Component {
   render() {
     const { classes } = this.props;
 
-    if (this.props.tracks && this.props.tracks[0].position) {
+    if (this.props.tracks && this.props.tracks.length > 0 && this.props.tracks[0].position) {
       this.createViz();
     }
     return (

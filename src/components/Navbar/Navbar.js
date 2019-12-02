@@ -10,9 +10,10 @@ import VisualNav from './VisualNav';
 class Navbar extends React.Component {
   render() {
     const {
-      classes,location, history,
+      classes, location, history,
       similarityAlgorithm, setAlgorithm,
-      xAxisFeature, yAxisFeature, setAxisFeatures
+      xAxisFeature, yAxisFeature, setAxisFeatures,
+      genresFilter, toggleGenre
     } = this.props;
     return (
       <AppBar position="fixed" className={classes.appBar}>
@@ -31,7 +32,9 @@ class Navbar extends React.Component {
                 setAlgorithm={setAlgorithm}
                 xAxisFeature={xAxisFeature}
                 yAxisFeature={yAxisFeature}
-                setAxisFeatures={setAxisFeatures} />
+                setAxisFeatures={setAxisFeatures}
+                genresFilter={genresFilter}
+                toggleGenre={toggleGenre} />
           }
         </Toolbar>
       </AppBar>
