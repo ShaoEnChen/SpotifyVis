@@ -94,6 +94,7 @@ class SongsViz extends React.Component {
                           .on('zoom', () => {
                             staticContext.fillStyle = canvasColor.normal;
                             lastTrackMouseOn = null;
+                            dynamicContext.clearRect(0, 0, canvasWidth, canvasHeight);
                             this.zoomed(staticContext, d3.event.transform, drawnTracks);
                           });
 
@@ -116,13 +117,7 @@ class SongsViz extends React.Component {
               // Remove previous highlight
               staticContext.fillStyle = canvasColor.normal;
               staticContext.fill(lastTrackMouseOn.path);
-
-              staticContext.fillStyle = canvasColor.background;
-              staticContext.fillText(
-                lastTrackMouseOn.songName,
-                lastTrackMouseOn.position[0],
-                lastTrackMouseOn.position[1]
-              );
+              dynamicContext.clearRect(0, 0, canvasWidth, canvasHeight);
             }
 
             // Highlight current drawnTrack
@@ -142,10 +137,8 @@ class SongsViz extends React.Component {
         if (!newPathFound && lastTrackMouseOn) {
           staticContext.fillStyle = canvasColor.normal;
           staticContext.fill(lastTrackMouseOn.path);
-
-          dynamicContext.clearRect(0, 0, canvasWidth, canvasHeight);
-
           lastTrackMouseOn = null;
+          dynamicContext.clearRect(0, 0, canvasWidth, canvasHeight);
         }
       }
 
@@ -153,6 +146,7 @@ class SongsViz extends React.Component {
       dynamicCanvas.on('click', () => {
         staticContext.fillStyle = canvasColor.normal;
         lastTrackMouseOn = null;
+        dynamicContext.clearRect(0, 0, canvasWidth, canvasHeight);
         this.reset(dynamicCanvas, zoomSetting);
       });
     });
