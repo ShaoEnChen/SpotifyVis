@@ -114,7 +114,8 @@ const ApiProvider = {
             let track = {
               songName: arrayItem.track.name,
               id: arrayItem.track.id,
-              artist: arrayItem.track.artists,
+              artists: arrayItem.track.artists,
+              album: arrayItem.track.album
             };
             tracks.push(track);
           });
@@ -151,11 +152,11 @@ const ApiProvider = {
     let endIndex = Math.min(startIndex + MaxArtistsPerRequest, tracks.length) - 1;
     let idBatch = '';
     if (index <= endIndex) {
-      idBatch = tracks[index].artist[0].id;
+      idBatch = tracks[index].artists[0].id;
       index++;
     }
     while (index <= endIndex) {
-      idBatch = idBatch.concat(',' + tracks[index].artist[0].id);
+      idBatch = idBatch.concat(',' + tracks[index].artists[0].id);
       index++;
     }
 
@@ -204,7 +205,7 @@ const ApiProvider = {
     };
     return axios.get('https://api.spotify.com/v1/playlists/' + playlistId + '/tracks', {
       params: {
-        'fields': 'items(track(id, name, artists))',
+        'fields': 'items(track(id, name, artists, album))',
         'offset': index
       }
     }).then((response) => {
