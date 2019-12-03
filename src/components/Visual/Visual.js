@@ -61,7 +61,7 @@ class Visual extends React.Component {
   toggleGenre(toggledGenre) {
     let genresFilter = this.state.genresFilter;
     genresFilter[toggledGenre] = !genresFilter[toggledGenre];
-    
+
     let genresDictionary = this.state.genresDictionary;
     for (const genre in genresDictionary) {
       genresDictionary[genre] = 0;
@@ -70,7 +70,7 @@ class Visual extends React.Component {
     const tracks = this.state.tracks;
     for (const track of tracks) {
       let shouldCountTrack = true;
-      for(const genre of track.genres) {
+      for (const genre of track.genres) {
         if (genresFilter[genre] === false) {
           shouldCountTrack = false;
           break;
@@ -86,7 +86,7 @@ class Visual extends React.Component {
         });
       }
     }
-    
+
     this.setState({
       genresDictionary,
       genresFilter
