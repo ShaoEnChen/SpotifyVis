@@ -1544,6 +1544,8 @@ article, section {
 
   	section.special, article.special {
   		text-align: center;
+      display: inline-block;
+    	vertical-align: bottom;
   	}
 
   	header p {
@@ -1575,3 +1577,14 @@ article, section {
   	header.major h2 {
   		font-size: 2em;
   	}
+
+    /* Logo */
+
+    logo {
+    	margin: 0;
+    	padding: 0;
+    	border: 0;
+    	font-size: 100%;
+    	font: inherit;
+      display: inline-block;
+    	vertical-align: bottom;}
