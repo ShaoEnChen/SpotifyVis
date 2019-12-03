@@ -21,45 +21,45 @@ class SongsViz extends React.Component {
     const originalX = position[0];
     const originalY = position[1];
     const x = originalX / 100 * context.canvas.width;
-    const y = originalY / 100 * context.canvas.height;
+    const y = context.canvas.height - originalY / 100 * context.canvas.height;
     return [x, y];
   }
 
   zoomed(context, transform, drawnTracks) {
     const zoomScale = transform.k;
+    const zoomThreshold = 2;
     const radius = 5 * zoomScale;
     const tracks = this.props.tracks;
     drawnTracks.length = 0;
 
     context.clearRect(0, 0, context.canvas.width, context.canvas.height);
-    if (zoomScale < 2.5) {
-      for (let trackIndex in tracks) {
-        const track = tracks[trackIndex];
-        const path = new Path2D();
-        const position = this.rescale(context, track.position);
-        const [x, y] = transform.apply(position);
 
+    for (let trackIndex in tracks) {
+      const track = tracks[trackIndex];
+      const path = new Path2D();
+      const position = this.rescale(context, track.position);
+      const [x, y] = transform.apply(position);
+
+      context.globalAlpha = zoomScale > zoomThreshold ? 0 : 1;
+      context.fillStyle = this.state.canvasColor.normal;
+      path.arc(x, y, radius, 0, 2 * Math.PI);
+      context.fill(path);
+      context.globalAlpha = 1;
+
+      if (zoomScale > zoomThreshold) {
         context.fillStyle = this.state.canvasColor.normal;
-        path.moveTo(x + radius, y);
-        path.arc(x, y, radius, 0, 2 * Math.PI);
-        context.fill(path);
-
-        drawnTracks.push({
-          path,
-          position: [x, y],
-          songName: track.songName,
-          artists: track.artists.map(artist => artist.name),
-          album: track.album.name,
-          genres: track.genres
-        });
-      }
-
-    } else {
-      for (let trackIndex in tracks) {
-        let position = this.rescale(context, tracks[trackIndex].position);
-        const [x, y] = transform.apply(position);
         context.fillText(tracks[trackIndex].songName, x, y);
       }
+
+      drawnTracks.push({
+        path,
+        position: [x, y],
+        songName: track.songName,
+        artists: track.artists.map(artist => artist.name),
+        album: track.album.name,
+        genres: track.genres,
+        zoomScale
+      });
     }
 
     return drawnTracks;
@@ -109,38 +109,88 @@ class SongsViz extends React.Component {
     dynamicCanvas.on('mousemove', () => {
       const [mouseX, mouseY] = d3.mouse(dynamicCanvas.node());
       let newPathFound = false;
+      let currentZoomScale;
+      const zoomThreshold = 2;
 
       // If mouse is on the last path, then no-op
       // If no previous record or mouse not on the last path, then:
       if (!lastTrackMouseOn || !staticContext.isPointInPath(lastTrackMouseOn.path, mouseX, mouseY)) {
         for (let track of drawnTracks) {
+          currentZoomScale = track.zoomScale;
+
           if (staticContext.isPointInPath(track.path, mouseX, mouseY)) {
             newPathFound = true;
             if (lastTrackMouseOn) {
               // Remove previous highlight
+              staticContext.globalAlpha = currentZoomScale > zoomThreshold ? 0 : 1;
               staticContext.fillStyle = canvasColor.normal;
               staticContext.fill(lastTrackMouseOn.path);
+              staticContext.globalAlpha = 1;
               dynamicContext.clearRect(0, 0, canvasWidth, canvasHeight);
             }
 
             // Highlight current drawnTrack
             lastTrackMouseOn = track;
+            staticContext.globalAlpha = currentZoomScale > zoomThreshold ? 0 : 1;
             staticContext.fillStyle = canvasColor.highlight;
             staticContext.fill(track.path);
+            staticContext.globalAlpha = 1;
+
+            const fontSize = 12;
+            const lineSpace = 4;
+            const textX = track.position[0] + 12 * currentZoomScale;
+            const textY = track.position[1] - 5 * currentZoomScale;
+            
+            let maxTextLength = 0;
+            const songNameText = track.songName;
+            maxTextLength = Math.max(maxTextLength, songNameText.length);
+            
+            const artistsText = 'Artists: ' + track.artists.reduce((str, artist) => str + artist + ', ', '').slice(0, -2);
+            maxTextLength = Math.max(maxTextLength, artistsText.length);
+
+            const albumText = 'Album: ' + track.album;
+            maxTextLength = Math.max(maxTextLength, albumText.length);
+            
+            const genresText = 'Genres: ' + track.genres.reduce((str, genre) => str + genre + ', ', '').slice(0, -2);
+            maxTextLength = Math.max(maxTextLength, genresText.length);
+
+            const textRectPadding = 4;
+            const textRectWidth = maxTextLength * fontSize / 2 + textRectPadding;
+            const textRectHeight = 4 * fontSize + 3 * lineSpace  + 3 * textRectPadding;
+            dynamicContext.fillStyle = '#000';
+            dynamicContext.fillRect(textX - textRectPadding, textY - fontSize - textRectPadding, textRectWidth, textRectHeight);
 
             dynamicContext.fillStyle = canvasColor.highlight;
+            dynamicContext.font = fontSize + 'px Arial';
             dynamicContext.fillText(
-              track.songName,
-              track.position[0] + 5 * (d3.event.transform ? d3.event.transform.k : 1),
-              track.position[1] - 5 * (d3.event.transform ? d3.event.transform.k : 1)
+              songNameText,
+              textX,
+              textY
             );
-
+            dynamicContext.fillText(
+              artistsText,
+              textX,
+              textY + fontSize + lineSpace
+            );
+            dynamicContext.fillText(
+              albumText,
+              textX,
+              textY + 2 * (fontSize + lineSpace)
+            );
+            dynamicContext.fillText(
+              genresText,
+              textX,
+              textY + 3 * (fontSize + lineSpace)
+            );
             break;
           };
         }
+        // Not on any path, clear settings
         if (!newPathFound && lastTrackMouseOn) {
+          staticContext.globalAlpha = currentZoomScale > zoomThreshold ? 0 : 1;
           staticContext.fillStyle = canvasColor.normal;
           staticContext.fill(lastTrackMouseOn.path);
+          staticContext.globalAlpha = 1;
           lastTrackMouseOn = null;
           dynamicContext.clearRect(0, 0, canvasWidth, canvasHeight);
         }
