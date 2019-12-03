@@ -9,6 +9,12 @@ class SongsViz extends React.Component {
     super(props);
     this.indent = React.createRef();
     this.viz = React.createRef();
+    this.state = {
+      canvasColor: {
+        normal: '#fff',
+        highlight: '#1ed761'
+      }
+    };
   }
 
   rescale(context, position) {
@@ -33,6 +39,7 @@ class SongsViz extends React.Component {
         const position = this.rescale(context, track.position);
         const [x, y] = transform.apply(position);
 
+        context.fillStyle = this.state.canvasColor.normal;
         path.moveTo(x + radius, y);
         path.arc(x, y, radius, 0, 2 * Math.PI);
         context.fill(path);
@@ -70,33 +77,29 @@ class SongsViz extends React.Component {
     const canvasWidth = viz.offsetWidth;
 
     const staticCanvas = d3.select(viz)
-                           .select('#static')
-                           .attr('width', canvasWidth)
-                           .attr('height', canvasHeight);
+      .select('#static')
+      .attr('width', canvasWidth)
+      .attr('height', canvasHeight);
 
     const dynamicCanvas = d3.select(viz)
-                            .select('#dynamic')
-                            .attr('width', canvasWidth)
-                            .attr('height', canvasHeight);
+      .select('#dynamic')
+      .attr('width', canvasWidth)
+      .attr('height', canvasHeight);
 
-    const canvasColor = {
-      background: '#fff',
-      normal: '#000',
-      highlight: '#f00'
-    }
+    const canvasColor = this.state.canvasColor;
     const staticContext = staticCanvas.node().getContext('2d');
     const dynamicContext = dynamicCanvas.node().getContext('2d');
 
     let drawnTracks = [];
     let lastTrackMouseOn = null;
     const zoomSetting = d3.zoom()
-                          .scaleExtent([1, 8])
-                          .on('zoom', () => {
-                            staticContext.fillStyle = canvasColor.normal;
-                            lastTrackMouseOn = null;
-                            dynamicContext.clearRect(0, 0, canvasWidth, canvasHeight);
-                            this.zoomed(staticContext, d3.event.transform, drawnTracks);
-                          });
+      .scaleExtent([1, 8])
+      .on('zoom', () => {
+        staticContext.fillStyle = canvasColor.normal;
+        lastTrackMouseOn = null;
+        dynamicContext.clearRect(0, 0, canvasWidth, canvasHeight);
+        this.zoomed(staticContext, d3.event.transform, drawnTracks);
+      });
 
     d3.select(dynamicContext.canvas).call(zoomSetting);
 
@@ -125,10 +128,11 @@ class SongsViz extends React.Component {
             staticContext.fillStyle = canvasColor.highlight;
             staticContext.fill(track.path);
 
+            dynamicContext.fillStyle = canvasColor.highlight;
             dynamicContext.fillText(
               track.songName,
-              track.position[0],
-              track.position[1]
+              track.position[0] + 5 * (d3.event.transform ? d3.event.transform.k : 1),
+              track.position[1] - 5 * (d3.event.transform ? d3.event.transform.k : 1)
             );
 
             break;
@@ -187,8 +191,10 @@ const styles = (theme) => {
     toolbarIndent: theme.mixins.toolbar,
     container: {
       width: 'calc(100vw - ' + theme.drawerWidth + 'px)',
+      maxWidth: '100%',
       height: '100vh',
-      marginLeft: theme.drawerWidth
+      marginLeft: theme.drawerWidth,
+      backgroundColor: '#111'
     },
     context: {
       display: 'flex',
