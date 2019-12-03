@@ -48,13 +48,13 @@ class SongsViz extends React.Component {
 
       if (zoomScale > zoomThreshold) {
         context.fillStyle = this.state.canvasColor.normal;
-        context.fillText(tracks[trackIndex].songName, x, y);
+        context.fillText(tracks[trackIndex].name, x, y);
       }
 
       drawnTracks.push({
         path,
         position: [x, y],
-        songName: track.songName,
+        name: track.name,
         artists: track.artists.map(artist => artist.name),
         album: track.album.name,
         genres: track.genres,
@@ -142,7 +142,7 @@ class SongsViz extends React.Component {
             const textY = track.position[1] - 5 * currentZoomScale;
             
             let maxTextLength = 0;
-            const songNameText = track.songName;
+            const songNameText = track.name;
             maxTextLength = Math.max(maxTextLength, songNameText.length);
             
             const artistsText = 'Artists: ' + track.artists.reduce((str, artist) => str + artist + ', ', '').slice(0, -2);

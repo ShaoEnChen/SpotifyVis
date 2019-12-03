@@ -123,20 +123,20 @@ const ApiProvider = {
   spotifyGetTracksAndAudioFeatures: (spotifyApi, playlistId, that) => {
     spotifyApi.setAccessToken(that.state.accessToken);
     ApiProvider.spotifyGetPlaylistTrackCount(playlistId, that).then((data) => {
-      const total = data.total;
+      let total = data.total;
+      let failedCount = 0;
       let tracks = [];
-      for (var index = 0; index < data.total; index += MaxTracksPerRequest) {
+      for (var index = 0; index < total; index += MaxTracksPerRequest) {
         ApiProvider.spotifyGetPlaylistTrackBatch(playlistId, index, that).then((data) => {
-          data.items.forEach((arrayItem) => {
-            let track = {
-              songName: arrayItem.track.name,
-              id: arrayItem.track.id,
-              artists: arrayItem.track.artists,
-              album: arrayItem.track.album
-            };
-            tracks.push(track);
+          data.items.forEach((arrayItem, index) => {
+            let track = arrayItem.track;
+            if (track) {
+              tracks.push(track);
+            } else {
+              failedCount += 1;
+            }
           });
-          if (tracks.length === total) {
+          if (tracks.length === total - failedCount) {
             //console.log('about to call main track features');
             ApiProvider.spotifyGetAudioFeatures(tracks, spotifyApi, that);
           }
